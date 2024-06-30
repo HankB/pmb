@@ -27,3 +27,8 @@ The boot media will have a a single FAT/boot partition and separate EXT4/root pa
 1. System is ready to reboot.
 
 This process will be explored manually to identify the detailed requirements and prove feasability.
+
+## Alternatives
+
+* <https://github.com/procount/pinn> PINN
+* 
