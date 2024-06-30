@@ -76,3 +76,12 @@ ansible-playbook provision-Debian-lite.yml -b -K --extra-vars "ssd_dev=/dev/mmcb
     eth_hw_mac=dc:a6:32:bf:65:b5 eth_spoof_mac=dc:a6:32:bf:65:b7 \
     wifi_hw_mac=dc:a6:32:bf:65:b6 wifi_spoof_mac=dc:a6:32:bf:65:b8"
 ```
+
+Now w/out writing image.
+
+```text
+ansible-playbook provision-Debian-lite.yml -b -K --extra-vars "ssd_dev=/dev/mmcblk0 \
+    new_host_name=mb2 part_prefix=p\
+    eth_hw_mac=dc:a6:32:bf:65:b5 eth_spoof_mac=dc:a6:32:bf:65:b7 \
+    wifi_hw_mac=dc:a6:32:bf:65:b6 wifi_spoof_mac=dc:a6:32:bf:65:b8"
+```
