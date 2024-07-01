@@ -175,4 +175,4 @@ pi64util
 root@trixi:~#
 ```
 
-Looks right. It does not appear that either partition was overwritten. Something more subtle?
+Looks right. It does not appear that either partition was overwritten. Something more subtle? No. Today it boots w/out difficulty on a CM4 and 4B (with no other drives attached.)
