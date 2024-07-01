@@ -4,6 +4,10 @@ Raspberry Pi Multi Boot
 
 Boot multiple operating systems from a single media device (SD, SSD, etc.) The goal is to provide scripts (or Ansible playbooks) to facilitate installing more than one OS on a bootable storage device and allowing the OS to boot from that.
 
+## Status
+
+Manual swap between two installations (RpiOS and Debian Bookworm) has been demonstrated. [See notes](./notes.md).
+
 ## Theory of operation
 
 The Raspberry Pi initiates the boot process using files in a FAT boot partition. `cmdline.txt` tells the boot process where to find the EXT4 root file system. A drive can have multiple independant root filesystems and by swapping to the corresponding FAT boot partition, the corresponding root filesystem (and hence, installation) can be selected for the next boot.
@@ -35,4 +39,3 @@ This process will be explored manually to identify the detailed requirements and
 ## Alternatives
 
 * <https://github.com/procount/pinn> PINN
-* 
