@@ -176,3 +176,7 @@ root@trixi:~#
 ```
 
 Looks right. It does not appear that either partition was overwritten. Something more subtle? No. Today it boots w/out difficulty on a CM4 and 4B (with no other drives attached.)
+
+## 2024-07-01 multiboot rescue
+
+Mounted SSD (running on 4B, `pi64util`) and found `mb2` using partition labels in `/etc/fstab`. Switched to PARTUUID. That works and now `mb2` boots. Next effort is to switch back to `mb1` and will do from `mb2`.
