@@ -180,3 +180,61 @@ Looks right. It does not appear that either partition was overwritten. Something
 ## 2024-07-01 multiboot rescue
 
 Mounted SSD (running on 4B, `pi64util`) and found `mb2` using partition labels in `/etc/fstab`. Switched to PARTUUID. That works and now `mb2` boots. Next effort is to switch back to `mb1` and will do from `mb2`.
+
+## 2024-07-01 mb2 to mb1 from mb2
+
+Things needed to switch.
+
+1. Backup `mb2`'s boot partition.
+1. Remove files from shared boot partition. `/boot/firmware/`.
+1. Restore `mb1`'s boot partition.
+1. Check `/boot/firmware/cmdline.txt` and `/etc/fstab` to confirm they are correct.
+
+But first install security updates and make sure `mb2` reboots. It does. Mounting the `mb1` root partition produces a curious message (but mounts the partition.):
+
+```text
+oot@mb2:/home/hbarta# mkdir /mnt/mb1_boot
+root@mb2:/home/hbarta# blkid
+/dev/sda2: LABEL="rootfs" UUID="fc7a1f9e-4967-4f41-a1f5-1b5927e6c5f9" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="6a002ed5-02"
+/dev/sda3: LABEL="debian" UUID="2c53b108-22e2-4030-918c-bbc091c21a8a" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="6a002ed5-03"
+/dev/sda1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="50C8-AEAE" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="6a002ed5-01"
+root@mb2:/home/hbarta# mv /mnt/mb1_boot /mnt/mb1
+root@mb2:/home/hbarta# mount /dev/sda2 /mnt/mb1
+mount: (hint) your fstab has been modified, but systemd still uses
+       the old version; use 'systemctl daemon-reload' to reload.
+root@mb2:/home/hbarta# 
+```
+
+```text
+cd
+mkdir -p boot-backups/mb2
+tar cf boot-backups/mb2/boot.tar /boot/firmware
+tar tf boot-backups/mb2/boot.tar
+ls -l /boot/firmware/
+rm -rf /boot/firmware/*
+tar --directory=/ /mnt/mb1/root/boot-backups/mb1/boot.tar.gz
+```
+
+This tar archive is created with the path `media/hbarta/bootfs/`. Need to
+
+```text
+cd /boot/firmware
+tar -xvf /mnt/mb1/root/boot-backups/mb1/boot.tar.gz --strip-components=3
+```
+
+And that worked. When the boot partition is archived from `mb2`/`mb1` a different command will be required. Everything looks right.
+
+```text
+root@mb2:/boot/firmware# cat cmdline.txt
+console=serial0,115200 console=tty1 root=PARTUUID=6a002ed5-02 rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consolesroot@mb2:/boot/firmware# blkid|grep 6a002ed5-02
+/dev/sda2: LABEL="rootfs" UUID="fc7a1f9e-4967-4f41-a1f5-1b5927e6c5f9" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="6a002ed5-02"
+root@mb2:/boot/firmware# cat /mnt/mb1/etc/fstab 
+proc            /proc           proc    defaults          0       0
+PARTUUID=6a002ed5-01  /boot/firmware  vfat    defaults          0       2
+PARTUUID=6a002ed5-02  /               ext4    defaults,noatime  0       1
+# a swapfile is not a swap partition, no line here
+#   use  dphys-swapfile swap[on|off]  for that
+root@mb2:/boot/firmware# 
+```
+
+Reboot and Great Success!
