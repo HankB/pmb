@@ -85,3 +85,74 @@ ansible-playbook provision-Debian-lite.yml -b -K --extra-vars "ssd_dev=/dev/mmcb
     eth_hw_mac=dc:a6:32:bf:65:b5 eth_spoof_mac=dc:a6:32:bf:65:b7 \
     wifi_hw_mac=dc:a6:32:bf:65:b6 wifi_spoof_mac=dc:a6:32:bf:65:b8"
 ```
+
+```text
+ansible-playbook first-boot-Debian.yml -i inventory -l mb2 -u root
+```
+
+This process hung, perhaps due to the excessive number of packages to upgrade. After a couple hours, killed it and rebooted. It was necessary to `dpkg -<whatever finishes things>` to get everything done. The next playbook ran w/out any problems.
+
+```text
+ansible-playbook second-boot-bookworm-lite-Debian.yml \
+    -i inventory -l mb2 -u root
+```
+
+Shutdown and boot from SSD to prepare to copy `mb2` to the SSD and boot that.
+
+Disk situation following boot and SD card insert:
+
+```text
+hbarta@mb1:~ $ df
+Filesystem     1K-blocks    Used Available Use% Mounted on
+udev              671944       0    671944   0% /dev
+tmpfs             189024    1520    187504   1% /run
+/dev/sda2       40245400 4942596  33238424  13% /
+tmpfs             945116     352    944764   1% /dev/shm
+tmpfs               5120      16      5104   1% /run/lock
+/dev/sda1         522230   76392    445838  15% /boot/firmware
+tmpfs             189020      40    188980   1% /run/user/1000
+/dev/sda3       40005128      24  37940720   1% /media/hbarta/debian
+/dev/mmcblk0p1    519904  145784    374120  29% /media/hbarta/RASPIFIRM
+/dev/mmcblk0p2  30418168 1703004  27152156   6% /media/hbarta/RASPIROOT
+hbarta@mb1:~ $ 
+```
+
+Not happy that `/media/hbarta/debian` mounted automatically. Perhaps can deal with that later. Now for rsync from `/media/hbarta/RASPIROOT` to `/media/hbarta/debian`, From <https://www.baeldung.com/linux/rsync-clone-file-system-hierarchy>
+
+```text
+rsync -axHAWXS --numeric-ids --info=progress2 /mnt/sourcePart/ /mnt/destPart
+```
+
+From <https://superuser.com/questions/307541/copy-entire-file-system-hierarchy-from-one-drive-to-another>
+
+```text
+rsync -avxHAX --progress / /new-disk/
+```
+
+First try
+
+```text
+rsync -axHAWXS /media/hbarta/RASPIROOT/ /media/hbarta/debian
+```
+
+Copy proceeded w/out issue and seems to have achieved the desired result. Boot pool next, `/media/hbarta/RASPIFIRM` to `/boot/firmware` after removing files from `/boot/firmware`
+
+```text
+rm -rf /boot/firmware/*
+rsync -axHAWXS /media/hbarta/RASPIFIRM/ /boot/firmware
+```
+
+Then fix the `cmdline.txt` to point to the block ID of `/dev/sda3`.
+
+```text
+root@mb1:~# blkid /dev/sda3
+/dev/sda3: LABEL="debian" UUID="2c53b108-22e2-4030-918c-bbc091c21a8a" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="6a002ed5-03"
+root@mb1:~# vi /boot/firmware/cmdline.txt 
+root@mb1:~# cat /boot/firmware/cmdline.txt
+console=tty0 console=ttyS1,115200 root=PARTUUID=6a002ed5-03 rw fsck.repair=yes net.ifnames=0  rootwait 
+root@mb1:~# 
+```
+
+### Result
+
+Target does not boot. Did I overlook necessary changes to `/etc/fstab` in `mb2`? Worse, utility install on the SD card no longer boots. :-/ Will fiddle with both to try to determine what I did wrong.
