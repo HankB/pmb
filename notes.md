@@ -156,3 +156,23 @@ root@mb1:~#
 ### Result
 
 Target does not boot. Did I overlook necessary changes to `/etc/fstab` in `mb2`? Worse, utility install on the SD card no longer boots. :-/ Will fiddle with both to try to determine what I did wrong.
+
+## 2024-07-01 pi64util rescue
+
+Boot looping yesterday. Mounted today in the SD card slot in a CM4 IO board (trixi)
+
+* `cmdline.txt` looks correct. `root=PARTUUID=e10f1597-02` 
+
+```text
+/dev/mmcblk0p2: LABEL="rootfs" UUID="fc7a1f9e-4967-4f41-a1f5-1b5927e6c5f9" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="e10f1597-02"
+```
+
+Looks unmolested. Mounting the root partition to check that. 
+
+```text
+root@trixi:~# cat /mnt/root/etc/hostname
+pi64util
+root@trixi:~#
+```
+
+Looks right. It does not appear that either partition was overwritten. Something more subtle?
