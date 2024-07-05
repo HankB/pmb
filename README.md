@@ -63,4 +63,11 @@ Parameters include:
 
 ## Alternatives
 
-* <https://github.com/procount/pinn> PINN
+* <https://github.com/procount/pinn> PINN is a more mature and polished boot selector. It is actively supported and works on a Pi 5. Specific advantages include:
+
+    * Point and shoot selection of candidate OSs.
+    * Select OS during the boot process.
+    * Graphical interface suitable for any level of expertise.
+    * Apparent availability of custom images.
+
+Compared to what I am working on, `pmb` will likely require more expertise to leverage but should work with any Pi OS that uses the FAT/EXT4 boot/root filesystem layout. AFAIK the way the Pi boots constrains the file layout this way.
