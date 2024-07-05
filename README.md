@@ -36,6 +36,31 @@ The boot media will have a a single FAT/boot partition and separate EXT4/root pa
 
 This process will be explored manually to identify the detailed requirements and prove feasability.
 
+## Decisions
+
+I plan to use `bash` shell scripts to implement this. I suspect that Ansible might be better but I don't want to make that a hard requirement for using this tool.
+
+Additional OS partitions will be in extended partitions to facilitate adding more than 2 other OS images.
+
+## Details
+
+### Initial provisioning
+
+On first boot, all OS images of which I am aware expand the EXT4 partition to use the remainder of the storage medium. This can be constrained by creating an additional disk partition that limits the space available for expansion to the empty space between the EXT4 partition and the additional partition.
+
+The Pi uses MPR partitions so in order to provide partitions for more than two additional OS images some will need to be extended partitions.
+
+ it will be necessary to verify that the Pi can use an EXT4 partition in an exgtended partition. (The boot partition will remain in a primary partitiion as it is shared among all OSs.)
+
+The first task is to create a pre-first boot playbook that will:
+
+1. Add the "blocker" partition to limit expansion of the original EXT4 partition.
+1. Create the files needed to spoof Ethernet and WiFi MAC addresses. (This is a convenience to allow the DHCP server to assign each OS a unique IP address.)
+
+Parameters include:
+
+* Target device
+
 ## Alternatives
 
 * <https://github.com/procount/pinn> PINN
