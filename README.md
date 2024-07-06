@@ -6,7 +6,7 @@ Boot multiple operating systems from a single media device (SD, SSD, etc.) The g
 
 ## Status
 
-Manual swap between two installations (RpiOS and Debian Bookworm) has been demonstrated. [See notes](./notes.md).
+Manual swap between two installations (RpiOS and Debian Bookworm) has been demonstrated. [See notes](./notes.md). Added a third partition and Debian Trixie boots w/out problems from a logical partition.
 
 ## Theory of operation
 
