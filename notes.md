@@ -14,7 +14,7 @@ In the boot FS in `cmdline.txt` the root filesystem is indicated by
 console=tty0 console=ttyS1,115200 root=LABEL=RASPIROOT rw fsck.repair=yes net.ifnames=0  rootwait
 ```
 
-Aside: This has resulted in the wrong root FS benign mounted when multiple media are installed, each with a partitioned named `RASPIROOT`. Note: This is a Debian install. The corresponding line on a RpiOS is
+Aside: This has resulted in the wrong root FS being mounted when multiple media are installed, each with a partitioned named `RASPIROOT`. Note: This is a Debian install. The corresponding line on a RpiOS is
 
 ```text
 console=serial0,115200 console=tty1 root=PARTUUID=f541a9d1-02 rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles cfg80211.ieee80211_regdom=US
