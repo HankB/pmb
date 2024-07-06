@@ -48,7 +48,7 @@ Using `PARTUUID` seems like a better identity for the root partition. Is changin
 
 ```text
 cd /media/hbarta/rootfs/root/boot-backups/mb1
-tar tar cf boot.tar /media/hbarta/bootfs
+tar cf boot.tar /media/hbarta/bootfs
 gzip boot.tar
 ```
 
@@ -238,3 +238,129 @@ root@mb2:/boot/firmware#
 ```
 
 Reboot and Great Success!
+
+## add an OS using an extended partition
+
+Add Debian Trixie installed on another SSD (and with ZFS, but ignoring that for now.)
+
+1. Create the partition using `gparted`. It seems to come up w/ no filesystem. Ha! That's because an "extended partition" is a container and I needed to create logical partitions inside in which to create filesystems.
+
+```text
+root@mb1:~# fdisk /dev/sda
+
+Welcome to fdisk (util-linux 2.38.1).
+Changes will remain in memory only, until you decide to write them.
+Be careful before using the write command.
+
+This disk is currently in use - repartitioning is probably a bad idea.
+It's recommended to umount all file systems, and swapoff all swap
+partitions on this disk.
+
+
+Command (m for help): p
+
+Disk /dev/sda: 476.94 GiB, 512110190592 bytes, 1000215216 sectors
+Disk model:                 
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 33553920 bytes
+Disklabel type: dos
+Disk identifier: 0x6a002ed5
+
+Device     Boot     Start        End   Sectors   Size Id Type
+/dev/sda1            8192    1056767   1048576   512M  c W95 FAT32 (LBA)
+/dev/sda2         1056768   82976767  81920000  39.1G 83 Linux
+/dev/sda3        82976768  164896767  81920000  39.1G 83 Linux
+/dev/sda4       164896768 1000214527 835317760 398.3G  5 Extended
+/dev/sda5       164898816  246818815  81920000  39.1G 83 Linux
+
+Command (m for help): q
+
+root@mb1:~# mkdir /mnt/sda5 
+root@mb1:~# mount /dev/sda5 /mnt/sda5
+root@mb1:~# rsync -axHAWXS --numeric-ids --info=progress2 /mnt/sdb2 /mnt/sda5
+rsync: [sender] link_stat "/mnt/sdb2" failed: No such file or directory (2)
+              0 100%    0.00kB/s    0:00:00 (xfr#0, to-chk=0/0)
+rsync error: some files/attrs were not transferred (see previous errors) (code 23) at main.c(1338) [sender=3.2.7]
+root@mb1:~# rsync -axHAWXS --numeric-ids --info=progress2 /media/hbarta/RASPIROOT/ /mnt/sda5
+  3,049,131,170  99%   50.33MB/s    0:00:57 (xfr#93051, to-chk=0/106257)   
+root@mb1:~# 
+```
+
+Backup the `mb1` boot partition
+
+```text
+root@mb1:~# tar cf boot-backups/mb1/boot.tar /boot/firmware
+tar: Removing leading `/' from member names
+root@mb1:~# 
+```
+
+Copy the `trixie` boot partition to a cleared `/boot/firmware` partition.
+
+```text
+root@mb1:~# rm -rf /boot/firmware/*
+root@mb1:~#  rsync -axHAWXS --numeric-ids  /media/hbarta/RASPIFIRM/ /boot/firmware
+rsync: [generator] chown "/boot/firmware/." failed: Operation not permitted (1)
+rsync: [generator] chown "/boot/firmware/boot" failed: Operation not permitted (1)
+...
+rsync: [receiver] chown "/boot/firmware/overlays/.wm8960-soundcard.dtbo.PtIkL3" failed: Operation not permitted (1)
+rsync error: some files/attrs were not transferred (see previous errors) (code 23) at main.c(1338) [sender=3.2.7]
+root@mb1:~# ls -l /boot/firmware
+total 242538
+-rwxr-xr-x 1 root root    38318 Jul  5 17:13 bcm2711-rpi-4-b.dtb
+-rwxr-xr-x 1 root root    38238 Jul  5 17:13 bcm2711-rpi-400.dtb
+-rwxr-xr-x 1 root root    38325 Jul  5 17:13 bcm2711-rpi-cm4-io.dtb
+-rwxr-xr-x 1 root root    20713 Jul  5 17:13 bcm2837-rpi-3-a-plus.dtb
+-rwxr-xr-x 1 root root    21443 Jul  5 17:13 bcm2837-rpi-3-b-plus.dtb
+-rwxr-xr-x 1 root root    20979 Jul  5 17:13 bcm2837-rpi-3-b.dtb
+-rwxr-xr-x 1 root root    20118 Jul  5 17:13 bcm2837-rpi-cm3-io3.dtb
+-rwxr-xr-x 1 root root    20544 Jul  5 17:13 bcm2837-rpi-zero-2-w.dtb
+drwxr-xr-x 3 root root     2048 May  7 10:46 boot
+-rwxr-xr-x 1 root root    52476 Jul  5 17:13 bootcode.bin
+-rwxr-xr-x 1 root root       99 Jul  5 17:13 cmdline.txt
+-rwxr-xr-x 1 root root      652 Jul  5 17:13 config.txt
+-rwxr-xr-x 1 root root     7303 Jul  5 17:13 fixup.dat
+-rwxr-xr-x 1 root root     5436 Jul  5 17:13 fixup4.dat
+-rwxr-xr-x 1 root root     3204 Jul  5 17:13 fixup4cd.dat
+-rwxr-xr-x 1 root root     8425 Jul  5 17:13 fixup4db.dat
+-rwxr-xr-x 1 root root     8425 Jul  5 17:13 fixup4x.dat
+-rwxr-xr-x 1 root root     3204 Jul  5 17:13 fixup_cd.dat
+-rwxr-xr-x 1 root root    10266 Jul  5 17:13 fixup_db.dat
+-rwxr-xr-x 1 root root    10268 Jul  5 17:13 fixup_x.dat
+-rwxr-xr-x 1 root root 52152279 Jul  5 17:13 initrd.img-6.6.15-arm64
+-rwxr-xr-x 1 root root 32614032 Jul  5 17:13 initrd.img-6.7.12-arm64
+-rwxr-xr-x 1 root root 32705228 Jul  5 17:13 initrd.img-6.8.12-arm64
+drwxr-xr-x 2 root root     4096 May  7 10:47 old
+drwxr-xr-x 2 root root    24576 Aug 24  2023 overlays
+-rwxr-xr-x 1 root root  2981056 Jul  5 17:13 start.elf
+-rwxr-xr-x 1 root root  2256800 Jul  5 17:13 start4.elf
+-rwxr-xr-x 1 root root   809468 Jul  5 17:13 start4cd.elf
+-rwxr-xr-x 1 root root  3754024 Jul  5 17:13 start4db.elf
+-rwxr-xr-x 1 root root  3004488 Jul  5 17:13 start4x.elf
+-rwxr-xr-x 1 root root   809468 Jul  5 17:13 start_cd.elf
+-rwxr-xr-x 1 root root  4825896 Jul  5 17:13 start_db.elf
+-rwxr-xr-x 1 root root  3728104 Jul  5 17:13 start_x.elf
+-rwxr-xr-x 1 root root     1076 Jul  5 17:13 sysconf.txt
+-rwxr-xr-x 1 root root 35497920 Jul  5 17:13 vmlinuz-6.6.15-arm64
+-rwxr-xr-x 1 root root 36192192 Jul  5 17:13 vmlinuz-6.7.12-arm64
+-rwxr-xr-x 1 root root 36630464 Jul  5 17:13 vmlinuz-6.8.12-arm64
+root@mb1:~# 
+```
+
+Now to fixup `cmdline.txt` and `fstab`
+
+```text
+root@mb1:~# blkid |grep sda5
+/dev/sda5: LABEL="trixie" UUID="3f246d49-ce8b-4d21-87a4-1960f825c7e3" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="6a002ed5-05"
+root@mb1:~# 
+root@mb1:~# cat /boot/firmware/cmdline.txt
+console=tty0 console=ttyS1,115200 root=PARTUUID=6a002ed5-05 rw fsck.repair=yes net.ifnames=0  rootwait 
+root@mb1:~# cat /mnt/sda5/etc/fstab
+# The root file system has fs_passno=1 as per fstab(5) for automatic fsck.
+PARTUUID=6a002ed5-05 / ext4 rw 0 1
+# All other file systems have fs_passno=2 as per fstab(5) for automatic fsck.
+PARTUUID=6a002ed5-01 /boot/firmware vfat rw 0 2
+root@mb1:~# 
+```
+
+Forgot to update the MAC address but it came up anyway as `neutron`. And it boots from a logical pattition w/out difficulty.
