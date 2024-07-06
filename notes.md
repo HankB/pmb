@@ -239,7 +239,7 @@ root@mb2:/boot/firmware#
 
 Reboot and Great Success!
 
-## add an OS using an extended partition
+## 2024-07-05 add an OS using an extended partition
 
 Add Debian Trixie installed on another SSD (and with ZFS, but ignoring that for now.)
 
@@ -363,4 +363,12 @@ PARTUUID=6a002ed5-01 /boot/firmware vfat rw 0 2
 root@mb1:~# 
 ```
 
-Forgot to update the MAC address but it came up anyway as `neutron`. And it boots from a logical pattition w/out difficulty.
+Forgot to update the MAC address but it came up anyway as `neutron`. And it boots from a logical pattition w/out difficulty. Ran an `apt update` and `apt upgrade` which included a new kernel and the system no longer boots. Examination showed `cmdline.txt` had reverted to a disk label. Fixing that allowed the system to boot.
+
+Based on information in <https://raspi.debian.net/defaults-and-settings/> The revised root indication can be customized in `/etc/default/raspi-firmware`.
+
+```text
+root@neutron:~# grep PARTUUID /etc/default/raspi-firmware
+ROOTPART=PARTUUID=f541a9d1-05
+root@neutron:~# 
+```
