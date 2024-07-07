@@ -372,3 +372,17 @@ root@neutron:~# grep PARTUUID /etc/default/raspi-firmware
 ROOTPART=PARTUUID=f541a9d1-05
 root@neutron:~# 
 ```
+
+## 2024-07-06 finish mb3
+
+* Provide unique MAC addresses and rename.
+* Make a copy of the boot partition.
+
+```text
+mkdir -p /root/boot-backups/mb3
+cd /root/boot-backups/mb3
+tar cf boot.tar /boot/firmware
+```
+
+* Create a pool and copy from `neutron:tank` (used for home directory.)
+* Install Plasma destop `kde-full`.
