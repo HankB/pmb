@@ -100,3 +100,29 @@ Now the logical partition for the new install. Following does not work.
 ```text
 echo  'size=10G, type=85' | sfdisk -N 4 /dev/mmcblk0
 ```
+
+(Switching to another PC, SD card now `/dev/sdb`.)
+
+```text
+s=$(($(sfdisk --list /dev/sdb |grep /dev/sdb2|awk '{print $3}')+1))
+echo $s
+```
+
+```text
+root@olive:~# s=$(($(sfdisk --list /dev/sdb |grep /dev/sdb2|awk '{print $3}')+1))
+root@olive:~# echo $s
+19531251
+root@olive:~# 
+```
+
+Following works (for first logical partition.)
+
+```text
+echo  "type=L size=10G" | sfdisk -N 5 /dev/sdb 
+```
+
+NB: Start logical partitions at #5.
+
+## 2024-07-07 partition numbers
+
+`/dev/sdb2` vs. `/dev/mmcblk0p2` - see the problem? Given a device, the script needs to ID the partiti0on numbering policy in effect. Testing for the existence of he device name for the 2nd partition should suffice.
