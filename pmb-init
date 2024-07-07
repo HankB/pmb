@@ -24,3 +24,15 @@ then
     usage
 fi
 
+# Check for partition2 (EXT4 partition)
+
+if [ -e ${device}2 ]
+then
+    part2=${device}2
+elif [ -e ${device}p2 ]
+then
+    part2=${device}p2
+else
+    echo "Can't find partition 2 on $device"
+    usage
+fi
