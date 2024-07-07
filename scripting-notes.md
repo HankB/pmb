@@ -75,3 +75,22 @@ echo "+,+" | sfdisk -N 3 /dev/mmcblk0 # no
 parted  /dev/mmcblk0 resizepart 2 10G
 parted /dev/mmcblk0 mkpart extended 100%
 ```
+
+## 2024-07-07 more exploration
+
+Status: Following command expands the partition and RpiOS still boots and then expands to fill remaining space. Attempts to use `sfdisk` to use the remaining space (before booting) to create an extended partition not yet successful. `sfdisk` sees enough space before the first partition and creates a tiny extended partition there.
+
+```text
+echo  'size=10G, type=L' | sfdisk -N 2 /dev/mmcblk0 # works
+```
+
+As it seems necessary to identify the first sector to use for a new partition, the following will do that.
+
+```text
+s=$(($(sfdisk --list /dev/mmcblk0 |grep /dev/mmcblk0p2|awk '{print $3}')+1))
+echo $s
+```
+
+```text
+echo  "start=$s type=Ex" | sfdisk -N 3 /dev/mmcblk0 # works! and boots/resizes
+```
