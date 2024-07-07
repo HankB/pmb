@@ -94,3 +94,9 @@ echo $s
 ```text
 echo  "start=$s type=Ex" | sfdisk -N 3 /dev/mmcblk0 # works! and boots/resizes
 ```
+
+Now the logical partition for the new install. Following does not work.
+
+```text
+echo  'size=10G, type=85' | sfdisk -N 4 /dev/mmcblk0
+```
