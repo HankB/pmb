@@ -14,7 +14,7 @@ set -o nounset
 #   (e.g. device=/dev/sdb or device=/dev/mmcblk0)
 
 usage() {
-    echo device=/dev/sdb size=10G $0 \(for example\)
+    echo device=/dev/sdb size=10G "$0" \(for example\)
     exit 1
 }
 
@@ -26,13 +26,23 @@ fi
 
 # Check for partition2 (EXT4 partition)
 
-if [ -e ${device}2 ]
+if [ -e "${device}2" ]
 then
     part2=${device}2
-elif [ -e ${device}p2 ]
+elif [ -e "${device}p2" ]
 then
-    part2=${device}p2
+    part2="${device}p2"
 else
     echo "Can't find partition 2 on $device"
     usage
 fi
+
+# make sure $part2 is not mounted
+umount "$part2" >/dev/null 2>&1 || true
+
+## Resize root (EXT4) partition
+echo  "size=${size}, type=L" | sfdisk -N 2 "${device}"
+
+## Use rest of storage device for an Extended partition
+s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
+echo  "start=$s type=Ex" | sfdisk -N 3 "${device}"
