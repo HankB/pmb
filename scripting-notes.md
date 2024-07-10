@@ -125,4 +125,136 @@ NB: Start logical partitions at #5.
 
 ## 2024-07-07 partition numbers
 
-`/dev/sdb2` vs. `/dev/mmcblk0p2` - see the problem? Given a device, the script needs to ID the partiti0on numbering policy in effect. Testing for the existence of he device name for the 2nd partition should suffice.
+`/dev/sdb2` vs. `/dev/mmcblk0p2` - see the problem? Given a device, the script needs to ID the partiti0on numbering policy in effect. Testing for the existence of the device name for the 2nd partition should suffice.
+
+## 2024-07-08 testing initial pmb-init
+
+Works with RpiOS. Hangs with Debian. Perhaps pre-expanding the root partition is an issue. Here's the test situation (Debian image)
+
+```text
+root@wengi:/home/hbarta# sfdisk -p /dev/mmcblk0
+sfdisk: invalid option -- 'p'
+Try 'sfdisk --help' for more information.
+root@wengi:/home/hbarta# sfdisk -l /dev/mmcblk0
+Disk /dev/mmcblk0: 29.72 GiB, 31914983424 bytes, 62333952 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x388501c0
+
+Device         Boot    Start      End  Sectors  Size Id Type
+/dev/mmcblk0p1          8192  1048575  1040384  508M  c W95 FAT32 (LBA)
+/dev/mmcblk0p2       1048576  5119999  4071424  1.9G 83 Linux
+/dev/mmcblk0p3      16334848 62332927 45998080 21.9G  5 Extended
+root@wengi:/home/hbarta# 
+```
+
+Still wrestling with Debian, trying the Ansible setup
+
+```text
+ansible-playbook provision-Debian-lite.yml -b -K --extra-vars "ssd_dev=/dev/mmcblk0 \
+    os_image=/home/hbarta/Downloads/ISO/Debian/20231109_raspi_4_bookworm.img.xz \
+    new_host_name=mb1 poolname=mb1_tank part_prefix=p\
+    eth_hw_mac=dc:a6:32:bf:65:b5 eth_spoof_mac=dc:a6:32:bf:65:b7 \
+    wifi_hw_mac=dc:a6:32:bf:65:b6 wifi_spoof_mac=dc:a6:32:bf:65:b8"
+```
+
+```text
+ansible-playbook provision-Debian-lite.yml -b -K --extra-vars "ssd_dev=/dev/mmcblk0 \
+    new_host_name=mb1 poolname=mb1_tank part_prefix=p\
+    eth_hw_mac=dc:a6:32:bf:65:b5 eth_spoof_mac=dc:a6:32:bf:65:b7 \
+    wifi_hw_mac=dc:a6:32:bf:65:b6 wifi_spoof_mac=dc:a6:32:bf:65:b8"
+```
+
+## 2024-07-10 Debian first boot woes
+
+Unable to find any combo that works here. The Ansible playbook that does partition manipulation and works uses `parted` so will proceed testing that.
+
+```text
+xzcat /home/hbarta/Downloads/ISO/Debian/20231109_raspi_4_bookworm.img.xz >/dev/mmcblk0
+parted -l
+parted -s /dev/mmcblk0 mkpart extended  12MiB 
+
+```text
+root@wengi:/home/hbarta# parted -l
+Model: Micron 2450 NVMe 256GB (nvme)
+Disk /dev/nvme0n1: 256GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+Disk Flags: 
+
+Number  Start   End     Size    Type     File system  Flags
+ 1      4194kB  541MB   537MB   primary  fat32        lba
+ 2      541MB   43.5GB  42.9GB  primary  ext4
+ 3      43.5GB  256GB   213GB   primary  zfs
+
+
+Model: SD SH32G (sd/mmc)
+Disk /dev/mmcblk0: 31.9GB
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+Disk Flags: 
+
+Number  Start   End     Size    Type     File system  Flags
+ 1      4194kB  537MB   533MB   primary  fat16        lba
+ 2      537MB   2621MB  2085MB  primary  ext4
+
+
+root@wengi:/home/hbarta# 
+```
+
+Create extended partition in the middle of free space
+
+```text
+parted  /dev/mmcblk0 mkpart extended  12GiB 20GiB
+```
+
+Result - boot hang and nothing resized. Delete extended partition and boot - success! Partition table following resizing.
+
+```text
+root@wengi:/home/hbarta# echo "unit s  print"|parted /dev/mmcblk0
+GNU Parted 3.5
+Using /dev/mmcblk0
+Welcome to GNU Parted! Type 'help' to view a list of commands.
+(parted) unit s  print                                                    
+Model: SD SH32G (sd/mmc)
+Disk /dev/mmcblk0: 62333952s
+Sector size (logical/physical): 512B/512B
+Partition Table: msdos
+Disk Flags: 
+
+Number  Start     End        Size       Type     File system  Flags
+ 1      8192s     1048575s   1040384s   primary  fat16        lba
+ 2      1048576s  62333951s  61285376s  primary  ext4
+
+(parted)                                                                  
+root@wengi:/home/hbarta# 
+```
+
+Resize root to 10GiB and boot. root expands. Resize again and boot.
+
+Partitions before reboot
+
+```text
+Number  Start      End        Size       Type      File system  Flags
+ 1      8192s      1048575s   1040384s   primary   fat16        lba
+ 2      1048576s   21528575s  20480000s  primary   ext4
+ 3      21528576s  62332927s  40804352s  extended
+```
+
+And the system hangs. Try the '-' size to create to end of device
+
+```text
+parted  -s -- /dev/mmcblk0 mkpart extended  10GiB -1s
+```
+
+resulting in
+
+```text
+Number  Start      End        Size       Type      File system  Flags
+ 1      8192s      1048575s   1040384s   primary   fat16        lba
+ 2      1048576s   9240575s   8192000s   primary   ext4
+ 3      20971520s  62333951s  41362432s  extended               lba
+```
+
