@@ -258,3 +258,26 @@ Number  Start      End        Size       Type      File system  Flags
  3      20971520s  62333951s  41362432s  extended               lba
 ```
 
+(Switch host to `olive` where the SD comes up as `/dev/sdb`) Also try playbook <https://github.com/HankB/polana-ansible/blob/main/provision-Debian.yml> (using a SATA SSD) and find that this works. It resizes the boot, partition *and* resizes the filesystem and then creates a third partition. Trying that on the SD card:
+
+```text
+xzcat /home/hbarta/Downloads/Pi/Debian/20231109_raspi_4_bookworm.img.xz >/dev/sdb # copy image
+parted  -s /dev/sdb rm 2     # delete boot partition
+parted  -s -- /dev/sdb mkpart primary  1048576s 10GiB # Recreate boot partition
+e2fsck -p -f /dev/sdb2 && resize2fs /dev/sdb2 # fsck and resize
+echo "unit s  print"|parted /dev/sdb
+```
+
+Check partition table
+
+```text
+Number  Start     End        Size       Type     File system  Flags
+ 1      8192s     1048575s   1040384s   primary  fat16        lba
+ 2      1048576s  20971519s  19922944s  primary  ext4
+```
+
+Add extended partition
+
+```text
+parted  -s -- /dev/sdb mkpart extended  20971520s -1s
+```
