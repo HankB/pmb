@@ -1,9 +1,9 @@
 ---
 # VARS to specify layout and characteristics
-ssd_dev: /dev/sdb
-part_prefix: ""
-os_image: /home/hbarta/Downloads/Pi/Debian/20231109_raspi_4_bookworm.img.xz
+device: /dev/mmcblk0
+part_prefix: "p"
+os_image: /home/hbarta/Downloads/ISO/Debian/20231109_raspi_4_bookworm.img.xz
 host_name: mb1
 eth_mac: d8:3a:dd:d2:89:3a
 wifi_mac: d8:3a:dd:d2:89:3d
-root_size: 10GiB
+size: 10GiB

@@ -12,7 +12,7 @@
 
 # Build a list of mounted partitions and unmount if found
   - name: build list of mounted partitions
-    shell: "df 2>/dev/null|grep {{ssd_dev}}|awk '{print $1}'"
+    shell: "df 2>/dev/null|grep {{device}}|awk '{print $1}'"
     register: "partitions"
 
   - name: list mounted partitions
@@ -26,24 +26,24 @@
 # execute blkdiscard if the image name is provided
   - name: erase SSD (blkdiscard)
     become: yes
-    shell: "blkdiscard -f {{ssd_dev}}"
+    shell: "blkdiscard -f {{device}}"
     when: os_image is defined
     ignore_errors: true
 
 # copy OS image if provided
   - name: copy OS image
     become: yes
-    shell: "xzcat {{os_image}} > {{ssd_dev}}"
+    shell: "xzcat {{os_image}} > {{device}}"
     when: os_image is defined
 
   - name: probe partitions
     become: yes
-    shell: "partprobe {{ ssd_dev }}"
+    shell: "partprobe {{ device }}"
 
 # Extend the 2nd (root) partition.
   - name: Read device information (always use unit when probing) (doesn't work)
     become: yes
-    community.general.parted: device="{{ ssd_dev }}" unit=MiB
+    community.general.parted: device="{{ device }}" unit=MiB
     register: ssd_info
 
   - name: show partition info
@@ -52,15 +52,15 @@
   - name: Extend root partition (2nd)
     become: yes
     community.general.parted:
-      device: "{{ ssd_dev }}"
+      device: "{{ device }}"
       number: 2
-      part_end: "{{ root_size }}"
+      part_end: "{{ size }}"
       resize: true
       state: present
 
   - name: Resize EXT4 filesystem
     become: yes
-    shell: "e2fsck -p -f {{ ssd_dev }}{{ part_prefix }}2 && resize2fs {{ ssd_dev }}{{ part_prefix }}2"
+    shell: "e2fsck -p -f {{ device }}{{ part_prefix }}2 && resize2fs {{ device }}{{ part_prefix }}2"
 
 # create extended partition
 
@@ -68,7 +68,7 @@
     become: yes
     tags: extended_part
     shell: |
-      echo $(( $(echo "unit s  print"|parted /dev/sdb|awk '/^ 2/ {print $3}'|sed s/s//)+1 ))
+      echo $(( $(echo "unit s  print"|parted {{ device }}|awk '/^ 2/ {print $3}'|sed s/s//)+1 ))
     register: ext_part_start
 
   - name: show ext_part_start info
@@ -80,7 +80,7 @@
     become: yes
     tags: extended_part
     parted:
-      device: "{{ ssd_dev }}"
+      device: "{{ device }}"
       number: 3
       part_start: "{{ ext_part_start.stdout_lines[0] }}s"
       part_end: -1s
@@ -91,7 +91,7 @@
     become: yes
     tags: extended_part
     parted:
-      device: "{{ ssd_dev }}"
+      device: "{{ device }}"
       number: 5
       part_start: "-512s"
       part_end: -1s
@@ -108,7 +108,7 @@
 
   - name: mount new root partition
     become: yes
-    command: "mount {{ssd_dev}}{{ part_prefix }}2 /mnt/RASPIROOT"
+    command: "mount {{device}}{{ part_prefix }}2 /mnt/RASPIROOT"
 
 # change host name
 
@@ -155,7 +155,7 @@
 
   - name: mount new boot partition
     become: yes
-    command: "mount {{ssd_dev}}{{ part_prefix }}1 /mnt/RASPIFIRM"
+    command: "mount {{device}}{{ part_prefix }}1 /mnt/RASPIFIRM"
 
   - name: stat ~/.ssh/id_rsa.pub
     become: no

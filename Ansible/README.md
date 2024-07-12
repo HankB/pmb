@@ -27,5 +27,5 @@ Parameters are sourced from [`pmb_init_vars.yml`](./pmb_init_vars.yml) and accor
 Typical usage would be:
 
 ```text
-ansible-playbook provision-Debian-lite.yml -b -K
+ansible-playbook pmb_init-Debian.yml -b -K
 ```
