@@ -22,7 +22,7 @@ This script does not (yet) work for Debian. For that an Ansible playbook is prov
 
 ```text
 cd Ansible
-/choose/editor pmb_init_vars.yml # and tauilor for your preferences
+/choose/editor pmb_init_vars.yml # and tailor for your preferences
 ansible-playbook provision-Debian-lite.yml -b -K
 ```
 
