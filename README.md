@@ -8,6 +8,26 @@ Boot multiple operating systems from a single media device (SD, SSD, etc.) The g
 
 Manual swap between two installations (RpiOS and Debian Bookworm) has been demonstrated. [See notes](./notes.md). Added a third partition and Debian Trixie boots w/out problems from a logical partition.
 
+There is a first cut of the script to provision an image for RpiOS `pmb-init`. It uses environment variables `size` (size of root partition) and `device` (target device for configuration.)
+
+**Note: This is meant to be run following installation using the Imager and before the first boot**
+
+Usage (following installation using the Imager):
+
+```text
+device=/dev/sdb size=10G ./pmb-init 
+```
+
+This script does not (yet) work for Debian. For that an Ansible playbook is provided and its usage is:
+
+```text
+cd Ansible
+/choose/editor pmb_init_vars.yml # and tauilor for your preferences
+ansible-playbook provision-Debian-lite.yml -b -K
+```
+
+This will install and tailor the image. Installing a Debian image using the Imager results in a system that does not boot.
+
 ## Theory of operation
 
 The Raspberry Pi initiates the boot process using files in a FAT boot partition. `cmdline.txt` tells the boot process where to find the EXT4 root file system. A drive can have multiple independant root filesystems and by swapping to the corresponding FAT boot partition, the corresponding root filesystem (and hence, installation) can be selected for the next boot.
