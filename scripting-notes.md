@@ -281,3 +281,22 @@ Add extended partition
 ```text
 parted  -s -- /dev/sdb mkpart extended  20971520s -1s
 ```
+
+## 2024-07-11 on to Ansible
+
+Can't seem to get scripting to work with Debian images, but Ansible does and playbooks I have at hand do a bunch of other useful stuff.
+
+Calculate the strt of the Extended partition
+
+```text
+root@olive:/home/hbarta/Programming/pmb# echo $(( $(echo "unit s  print"|parted /dev/sdb|egrep "^ 2"|awk '{print $3}'|sed s/s//)+1 ))
+20971520
+root@olive:/home/hbarta/Programming/pmb# 
+```
+
+And sticking with `parted`. Trying
+
+1. extended partition - no joy
+1. primary partition - boots
+1. extended and full logical partition - boots
+1. extended partition with small logical partition at the end - boots!
