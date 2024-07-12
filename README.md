@@ -23,10 +23,12 @@ This script does not (yet) work for Debian. For that an Ansible playbook is prov
 ```text
 cd Ansible
 /choose/editor pmb_init_vars.yml # and tailor for your preferences
-ansible-playbook provision-Debian-lite.yml -b -K
+ansible-playbook pmb_init-Debian.yml -b -K
 ```
 
 This will install and tailor the image. Installing a Debian image using the Imager results in a system that does not boot.
+
+The playbook still needs some work.
 
 ## Theory of operation
 
