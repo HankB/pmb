@@ -102,11 +102,13 @@
 
   - name: create root partition mount point
     become: yes
+    tags: hostname
     file:
       path: /mnt/RASPIROOT 
       state: directory
 
   - name: mount new root partition
+    tags: hostname
     become: yes
     command: "mount {{device}}{{ part_prefix }}2 /mnt/RASPIROOT"
 
@@ -114,9 +116,18 @@
 
   - name: change hostname in /etc/hosts
     become: yes
-    shell: |
-      "echo  {{host_name}} >/mnt/RASPIROOT/etc/hostname"
-      "echo  127.0.1.1       {{host_name}} >/mnt/RASPIROOT/etc/hosts"
+    tags: hostname
+    ansible.builtin.lineinfile:
+      path: /mnt/RASPIROOT/etc/hosts
+      line: 127.0.1.1 {{host_name}}
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: change hostname in /etc/hostname
+    become: yes
+    tags: hostname
+    shell: "echo  {{host_name}} >/mnt/RASPIROOT/etc/hostname"
 
 # Spoof WiFi and Ethernet MAC
 
@@ -139,9 +150,10 @@
         [Link]
         MACAddress={{wifi_mac}}
 
-# mount root partition
+# umount root partition
 
   - name: unmount root partition
+    tags: hostname
     become: yes
     command: "umount /mnt/RASPIROOT"
 
