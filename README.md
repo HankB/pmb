@@ -12,7 +12,9 @@ There is a first cut of the script to provision an image for RpiOS `pmb-init`. I
 
 **Note: This is meant to be run following installation using the Imager and before the first boot**
 
-Usage (following installation using the Imager):
+Example sage (following installation using the Imager and run as `root`):
+
+**Be certain you specify the correct device**
 
 ```text
 device=/dev/sdb size=10G ./pmb-init 
