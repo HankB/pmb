@@ -286,7 +286,7 @@ parted  -s -- /dev/sdb mkpart extended  20971520s -1s
 
 Can't seem to get scripting to work with Debian images, but Ansible does and playbooks I have at hand do a bunch of other useful stuff.
 
-Calculate the strt of the Extended partition
+Calculate the start of the Extended partition
 
 ```text
 root@olive:/home/hbarta/Programming/pmb# echo $(( $(echo "unit s  print"|parted /dev/sdb|egrep "^ 2"|awk '{print $3}'|sed s/s//)+1 ))
@@ -300,3 +300,12 @@ And sticking with `parted`. Trying
 1. primary partition - boots
 1. extended and full logical partition - boots
 1. extended partition with small logical partition at the end - boots!
+
+## 2024-07-12 back to bash
+
+Performing some testing with `pmb-init` and some other distros including Ubuntu, Alma and also using a variety of media including SD card, USB/SSD and perhaps NVME SSD.
+
+### RpiOS
+
+Use imager to load OS and configure. SD and SATA SSD work.
+
