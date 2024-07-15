@@ -300,12 +300,3 @@ And sticking with `parted`. Trying
 1. primary partition - boots
 1. extended and full logical partition - boots
 1. extended partition with small logical partition at the end - boots!
-
-## 2024-07-12 back to bash
-
-Performing some testing with `pmb-init` and some other distros including Ubuntu, Alma and also using a variety of media including SD card, USB/SSD and perhaps NVME SSD.
-
-### RpiOS
-
-Use imager to load OS and configure. SD and SATA SSD work.
-
