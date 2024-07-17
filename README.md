@@ -2,35 +2,38 @@
 
 Raspberry Pi Multi Boot
 
-Boot multiple operating systems from a single media device (SD, SSD, etc.) The goal is to provide scripts (or Ansible playbooks) to facilitate installing more than one OS on a bootable storage device and allowing the OS to boot from that.
+This is a work in progress and a consequence is that this README rambles. A lot.
+
+Boot multiple operating systems from a single media device (SD, SSD, etc.) The goal is to provide scripts (or Ansible playbooks) to facilitate installing more than one OS on a bootable storage device and allowing the OS to boot from any of them.
 
 ## Status
 
-Manual swap between two installations (RpiOS and Debian Bookworm) has been demonstrated. [See notes](./notes.md). Added a third partition and Debian Trixie boots w/out problems from a logical partition.
+* Manual swap between two installations (RpiOS and Debian Bookworm) has been demonstrated. [See notes](./notes/notes.md). Added a third partition and Debian Trixie boots w/out problems from a logical partition.
+* There is a first cut of the script to provision an image for RpiOS `pmb-init`. It uses environment variables `size` (size of root partition) and `device` (target device for configuration.)
+* Work is beginning on a script to add subsequent OSs to the target storage device,
 
-There is a first cut of the script to provision an image for RpiOS `pmb-init`. It uses environment variables `size` (size of root partition) and `device` (target device for configuration.)
+## TODO
+
+* Provide additional capabilities for `pmb-init` to match the Ansible playboiok used for Debian.
+* Modify `pmb-init` to work with Debian.
+* Implerment a .env file for `pmb-init`.
+
+## Usage:
 
 **Note: This is meant to be run following installation using the Imager and before the first boot**
 
-Example sage (following installation using the Imager and run as `root`):
-
 **Be certain you specify the correct device**
+
+1. Install the OS (RpiOS is likely to be the most tested.)
+1. Run as root:
 
 ```text
 device=/dev/sdb size=10G ./pmb-init 
 ```
 
-This script does not (yet) work for Debian. For that an Ansible playbook is provided and its usage is:
+3. Boot into the new installation, install `gparted` (or the tool of yuour choice) to confirm the desired disk partitions. TODO: provide test example.
 
-```text
-cd Ansible
-/choose/editor pmb_init_vars.yml # and tailor for your preferences
-ansible-playbook pmb_init-Debian.yml -b -K
-```
-
-This will install and tailor the image. Installing a Debian image using the Imager results in a system that does not boot.
-
-The playbook still needs some work.
+This script does not (yet) work for Debian. For that see the README in the Ansible directory:
 
 ## Theory of operation
 
@@ -47,7 +50,9 @@ TODO: Confirm the details of the boot process, in particular how the files in th
 
 ## Plan
 
-There will be two processes.
+There will be three scripts.
+
+1. Initialize the SSD following first installation of RpiOS (Recommended, eventually any OS should work.)
 
 1. Transfer an installation from a normal Pi installation to the multi-boot environment. (e.g. installation.)
 1. Swap contents of the FAT partition to the one desired for the subsequent boot. These contents will be stored in the EXT4 partition for the respective OS installation.
@@ -78,12 +83,18 @@ The Pi uses MPR partitions so in order to provide partitions for more than two a
 
 The first task is to create a pre-first boot playbook that will:
 
-1. Add the "blocker" partition to limit expansion of the original EXT4 partition.
+1. Add the "blocker" partition to limit expansion of the original EXT4 partition. (In the case of Debian it is necessary to create a partition at the end of the Extended partition.)
 1. Create the files needed to spoof Ethernet and WiFi MAC addresses. (This is a convenience to allow the DHCP server to assign each OS a unique IP address.)
 
 Parameters include:
 
 * Target device
+* Size for root partition.
+* (Eventually) Ethernet and WiFi MAC address to spoof.
+
+### Adding another OS
+
+This will be allocated to a Logical partition in the Extended partition.
 
 ## Alternatives
 
@@ -95,3 +106,7 @@ Parameters include:
     * Apparent availability of custom images.
 
 Compared to what I am working on, `pmb` will likely require more expertise to leverage but should work with any Pi OS that uses the FAT/EXT4 boot/root filesystem layout. AFAIK the way the Pi boots constrains the file layout this way.
+
+## Errata
+
+* The `bash` scripts will be `shellcheck` clean and include some boilerplate from a site that no longer exists. (https://kvz.io/bash-best-practices.html or https://github.com/kvz/bash3boilerplate.)
