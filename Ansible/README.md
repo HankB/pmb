@@ -27,5 +27,6 @@ Parameters are sourced from [`pmb_init_vars.yml`](./pmb_init_vars.yml) and accor
 Typical usage would be:
 
 ```text
+/choose/editor pmb_init_vars.yml # and tailor for your preferences
 ansible-playbook pmb_init-Debian.yml -b -K
 ```
