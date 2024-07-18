@@ -164,3 +164,55 @@ Contents of `/mnt/root/root-backup/mnt-loop0p1-backup.tar` look right. Unmount a
 umount /mnt/root /mnt/loop0p2 /mnt/loop0p1
 losetup -d $IMG
 ```
+
+## 2024-07-18 try a swap
+
+Mounted root on the SD card from the NVME host to modify the hostname and remap the MAC. Booted into the SD RpiOS install and assigned a static IP. The alternate root was automatically mounted (not particularly desirable ...) Need to back up the current boot partition and restore the other boot partition (and check the `cmdline.txt` and incoming `/etc/fstab`.) Does everything look good in the current (original) install? I think so:
+
+```text
+root@mbsd1:~# cat /etc/fstab
+proc            /proc           proc    defaults          0       0
+PARTUUID=ba34081c-01  /boot/firmware  vfat    defaults          0       2
+PARTUUID=ba34081c-02  /               ext4    defaults,noatime  0       1
+# a swapfile is not a swap partition, no line here
+#   use  dphys-swapfile swap[on|off]  for that
+root@mbsd1:~# cat /boot/firmware/cmdline.txt 
+console=serial0,115200 console=tty1 root=PARTUUID=ba34081c-02 rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles cfg80211.ieee80211_regdom=USroot@mbsd1:~# 
+root@mbsd1:~# 
+root@mbsd1:~# 
+root@mbsd1:~# blkid
+/dev/nvme0n1p3: LABEL="P22163770E7C5" UUID="10853186896656006072" UUID_SUB="5044967767428183522" BLOCK_SIZE="4096" TYPE="zfs_member" PARTUUID="f541a9d1-03"
+/dev/nvme0n1p1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="3A1A-EC0C" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="f541a9d1-01"
+/dev/nvme0n1p2: LABEL="rootfs" UUID="063c26d0-665d-497a-ad0f-965d05b228be" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="f541a9d1-02"
+/dev/mmcblk0p5: UUID="1240a8bb-bc9b-449a-91fe-e44d52b90f60" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="ba34081c-05"
+/dev/mmcblk0p1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="50C8-AEAE" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="ba34081c-01"
+/dev/mmcblk0p2: LABEL="rootfs" UUID="fc7a1f9e-4967-4f41-a1f5-1b5927e6c5f9" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="ba34081c-02"
+root@mbsd1:~# blkid|grep ba34081c-02
+/dev/mmcblk0p2: LABEL="rootfs" UUID="fc7a1f9e-4967-4f41-a1f5-1b5927e6c5f9" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="ba34081c-02"
+root@mbsd1:~# 
+```
+
+And backup with a file name distinguishable from the one used for an added install.
+
+```text
+mkdir -p /root/root-backup/
+tar cf /root/root-backup/boot-firmware-backup.tar /boot/firmware
+tar tf /root/root-backup/boot-firmware-backup.tar
+```
+
+Result looks right. Now to replace contents of `/boot/firmware` with the added install. First the mount.
+
+```text
+alt=/media/hbarta/1240a8bb-bc9b-449a-91fe-e44d52b90f60
+tar tf ${alt}/root/root-backup/mnt-loop0p1-backup.tar
+```
+
+Backup found in unexpected location
+
+```text
+root@mbsd1:~# find ${alt} -name mnt-loop0p1-backup.tar
+/media/hbarta/1240a8bb-bc9b-449a-91fe-e44d52b90f60/root-backup/mnt-loop0p1-backup.tar
+root@mbsd1:~# 
+```
+
+Also it will be necessary to fixup `cmdline.txt` and `/etc/fstab`. `cmdline.txt` cannot be done ahead of time because that partition is directly backed up form the install image. It would be possible to fixup the `/etc/fstab` after it is copied to the target media.
