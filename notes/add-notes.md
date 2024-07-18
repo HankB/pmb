@@ -1,0 +1,166 @@
+# add notes
+
+Manual addition of an additional partition.
+
+## 2024-07-17 find new partition start
+
+Testing initially on a Pi 5 with the host OS (RpiOS) running from NVME SSD and testing on a 64GB SD card.
+
+Start with a new RpiOS install followed by `pmb-init` and first boot. Installing `2024-03-15-raspios-bookworm-arm64.img.xz` and then running
+
+```text
+sudo device=/dev/mmcblk0 size=20GiB  ./pmb-init
+```
+
+Boot OK and shutdown to reboot (NVME) host. Resulting partition table looks like:
+
+```text
+root@wengi:/# sfdisk --list /dev/mmcblk0
+Disk /dev/mmcblk0: 59.69 GiB, 64088965120 bytes, 125173760 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x6d3878a4
+
+Device         Boot    Start       End  Sectors  Size Id Type
+/dev/mmcblk0p1          8192   1056767  1048576  512M  c W95 FAT32 (LBA)
+/dev/mmcblk0p2       1056768  42999807 41943040   20G 83 Linux
+/dev/mmcblk0p3      42999808 125173759 82173952 39.2G  5 Extended
+root@wengi:/# 
+```
+
+In this case, the starting point for the next partition is the same as the extended partition and the partition number will be 5. Now to create a partition starting there and using 10GiB of storage.
+
+```text
+sfdisk -s /dev/mmcblk0 -N 5  42999808s 10GiB
+sfdisk -s -N 5 /dev/mmcblk0 42999808s 10GiB
+echo 'size=10G, start=42999808s, type=L ' | sfdisk -N 5 /dev/mmcblk0
+echo -e 'type=L' | sfdisk -N 5 /dev/mmcblk0 
+sfdisk -N 5 --delete /dev/mmcblk0  # removed all partitioning!
+echo -e 'type=L, size=10GiB' | sfdisk -N 5 /dev/mmcblk0 
+```
+
+Reload RpiOS and run 
+
+```text
+sudo device=/dev/mmcblk0 size=20GiB  ./pmb-init
+```
+
+Skip the boot process and go straight to adding.
+
+```text
+echo -e 'type=L, size=10GiB' | sfdisk -N 5 /dev/mmcblk0 
+```
+
+Works and results in 
+
+```text
+root@wengi:/# echo -e 'type=L, size=10GiB' | sfdisk -N 5 /dev/mmcblk0 
+warning: /dev/mmcblk0: partition 5 is not defined yet
+Checking that no-one is using this disk right now ... OK
+
+Disk /dev/mmcblk0: 59.69 GiB, 64088965120 bytes, 125173760 sectors
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x617a2abd
+
+Old situation:
+
+Device         Boot    Start       End   Sectors  Size Id Type
+/dev/mmcblk0p1          8192   1056767   1048576  512M  c W95 FAT32 (LBA)
+/dev/mmcblk0p2       1056768  22028287  20971520   10G 83 Linux
+/dev/mmcblk0p3      22028288 125173759 103145472 49.2G  5 Extended
+
+/dev/mmcblk0p5: Created a new partition 5 of type 'Linux' and of size 10 GiB.
+
+New situation:
+Disklabel type: dos
+Disk identifier: 0x617a2abd
+
+Device         Boot    Start       End   Sectors  Size Id Type
+/dev/mmcblk0p1          8192   1056767   1048576  512M  c W95 FAT32 (LBA)
+/dev/mmcblk0p2       1056768  22028287  20971520   10G 83 Linux
+/dev/mmcblk0p3      22028288 125173759 103145472 49.2G  5 Extended
+/dev/mmcblk0p5      22030336  43001855  20971520   10G 83 Linux
+
+The partition table has been altered.
+Calling ioctl() to re-read partition table.
+Syncing disks.
+root@wengi:/# 
+```
+
+Format the new partition.
+
+```text
+mkfs.ext4 /dev/mmcblk0p5
+```
+
+Expand a Ubuntu image to `/tmp` so we can mount it.
+
+```text
+unxz -k --stdout ubuntu-24.04-preinstalled-server-arm64+raspi.img.xz >/tmp/$(basename -s .xz ubuntu-24.04-preinstalled-server-arm64+raspi.img.xz)
+```
+
+Create loop device (following pattern at <https://openzfs.github.io/openzfs-docs/Getting%20Started/Ubuntu/Ubuntu%2020.04%20Root%20on%20ZFS%20for%20Raspberry%20Pi.html#step-1-disk-formatting> step #9)
+
+```text
+IMG=$(losetup -fP --show /tmp/ubuntu-24.04-preinstalled-server-arm64+raspi.img)
+echo $IMG
+ls -l ${IMG}*
+mkdir /mnt/$(basename ${IMG}p1)
+mkdir /mnt/$(basename ${IMG}p2)
+mount ${IMG}p1 /mnt/$(basename ${IMG}p1)
+mount ${IMG}p2 /mnt/$(basename ${IMG}p2)
+```
+
+```text
+root@wengi:/# ls -l ${IMG}*
+brw-rw---- 1 root disk   7, 0 Jul 17 22:05 /dev/loop0
+brw-rw---- 1 root disk 259, 4 Jul 17 22:05 /dev/loop0p1
+brw-rw---- 1 root disk 259, 5 Jul 17 22:05 /dev/loop0p2
+root@wengi:/# 
+root@wengi:/# df -h /mnt/loop*
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/loop0p1    505M   85M  420M  17% /mnt/loop0p1
+/dev/loop0p2    2.8G  1.9G  782M  71% /mnt/loop0p2
+root@wengi:/# 
+```
+
+Mount the destination partitio0n
+
+```text
+mkdir -p /mnt/root
+mount /dev/mmcblk0p5 /mnt/root
+```
+
+```text
+root@wengi:/# mkdir -p /mnt/root
+root@wengi:/# mount /dev/mmcblk0p5 /mnt/root
+root@wengi:/# df -h /mnt/root
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/mmcblk0p5  9.8G   24K  9.3G   1% /mnt/root
+root@wengi:/# 
+```
+
+Copy source root part to destination
+
+```text
+rsync -a /mnt/loop0p2/ /mnt/boot
+```
+
+Files in `/mnt/root` look right. Now "backup" contents of the boot filesystem to the root filesystem in `root`'s files.
+
+```text
+mkdir -p /mnt/root/root-backup/
+tar cf /mnt/root/root-backup/mnt-loop0p1-backup.tar /mnt/loop0p1
+```
+
+Contents of `/mnt/root/root-backup/mnt-loop0p1-backup.tar` look right. Unmount all and destroy loop device.
+
+```text
+umount /mnt/root /mnt/loop0p2 /mnt/loop0p1
+losetup -d $IMG
+```

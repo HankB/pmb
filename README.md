@@ -96,6 +96,17 @@ Parameters include:
 
 This will be allocated to a Logical partition in the Extended partition.
 
+Details:
+
+* This is best performed when booted from media other than the target as formatting programs get cranky about modifying the partitoin table when partitions are mounted and active. (Probably boot from SD and modify SATA/USB or NVME SSD.)
+* Identify the starting sector of the next partition.
+* Create and format and mount the partition.
+* Uncompress the source image to `/tmp`
+* Identify the partitions inside the image and mount thep (e.g. `losetup`)
+* Copy the root partition to the new added partition.
+* "Backup" the boot (FAT) partition to the new partition as was done when swapping
+OSs. This eliminates the need to identify which OS was previously active and back it up before copying the new boot sector in place.
+
 ## Alternatives
 
 * <https://github.com/procount/pinn> PINN is a more mature and polished boot selector. It is actively supported and works on a Pi 5. Specific advantages include:
