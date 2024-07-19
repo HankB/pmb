@@ -28,6 +28,8 @@ fi
 
 # Check for partition5 (Minimum partition when prepared, first Logical)
 
+echo "============================================= find device (part5)"
+
 if [ -e "${device}5" ]
 then
     part5=${device}5
@@ -42,29 +44,30 @@ else
     usage
 fi
 
+echo "============================================= part5: $part5"
+
 ## Now loop to find the highest numbered partition.
 
 for index in {5..20}
 do    
-  echo $index
-  if [ ! -e ${partbase}$index ]
+  echo "$index"
+  if [ ! -e "${partbase}$index" ]
   then
     break
   fi
 done
 
-newpart=$(($index-1))
+newpart="$(($index-1))"
 echo "next available partition is $index and new partition is $newpart"
+echo "============================================= partitions to use: $index and $newpart"
 
 ## Create the new partition
 
-sfdisk --delete ${device} ${newpart}
-if [ echo -e "type=L, size=${size}" | sfdisk -N ${newpart} ${device} ]
-then
-    echo fail
-else
-    echo all good
-fi
+sfdisk --delete "${device}" "${newpart}"
+echo -e "type=L, size=${size}" | sfdisk -N "${newpart}" "${device}"
 
 mkfs.ext4 ${partbase}${newpart}
-echo -e 'type=L' | sfdisk -N ${index} ${device}
+
+echo "============================================= recreate the filler"
+
+echo -e 'type=L' | sfdisk -N "${index}" "${device}"
