@@ -216,3 +216,119 @@ root@mbsd1:~#
 ```
 
 Also it will be necessary to fixup `cmdline.txt` and `/etc/fstab`. `cmdline.txt` cannot be done ahead of time because that partition is directly backed up form the install image. It would be possible to fixup the `/etc/fstab` after it is copied to the target media.
+
+```text
+alt=/media/hbarta/1240a8bb-bc9b-449a-91fe-e44d52b90f60
+tar tf ${alt}/root-backup/mnt-loop0p1-backup.tar
+cd /boot/firmware
+rm -rf *
+tar -xvf ${alt}/root-backup/mnt-loop0p1-backup.tar --strip-components=2
+blkid
+```
+
+```text
+root@mbsd1:/boot/firmware# blkid
+/dev/nvme0n1p3: LABEL="P22163770E7C5" UUID="10853186896656006072" UUID_SUB="5044967767428183522" BLOCK_SIZE="4096" TYPE="zfs_member" PARTUUID="f541a9d1-03"
+/dev/nvme0n1p1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="3A1A-EC0C" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="f541a9d1-01"
+/dev/nvme0n1p2: LABEL="rootfs" UUID="063c26d0-665d-497a-ad0f-965d05b228be" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="f541a9d1-02"
+/dev/mmcblk0p5: UUID="1240a8bb-bc9b-449a-91fe-e44d52b90f60" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="ba34081c-05"
+/dev/mmcblk0p1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="50C8-AEAE" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="ba34081c-01"
+/dev/mmcblk0p2: LABEL="rootfs" UUID="fc7a1f9e-4967-4f41-a1f5-1b5927e6c5f9" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="ba34081c-02"
+root@mbsd1:/boot/firmware# 
+```
+
+Fix cmdline.txt and try to boot Ubuntu! Not successful, `/` is mounted ro. There was an error from 
+
+```text
+systemd-remount-fs[375]: mount: /: can't find LABEL=`writable`
+``` 
+
+Need to recheck the filesystems in the install image and duplicate this for the new partition. Repeating the steps found at "Expand a Ubuntu image" above
+
+```text
+cd Downloads/Pi/Ubuntu/
+unxz -k --stdout ubuntu-24.04-preinstalled-server-arm64+raspi.img.xz >/tmp/$(basename -s .xz ubuntu-24.04-preinstalled-server-arm64+raspi.img.xz)
+sudo -s
+cd
+IMG=$(losetup -fP --show /tmp/ubuntu-24.04-preinstalled-server-arm64+raspi.img)
+blkid |grep loop
+# insert SD card
+blkid |grep mmc
+e2label /dev/mmcblk0p5 writable
+```
+
+```text
+root@wengi:~# blkid |grep loop
+/dev/loop0p1: LABEL_FATBOOT="system-boot" LABEL="system-boot" UUID="F526-0340" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="0529037a-01"
+/dev/loop0p2: LABEL="writable" UUID="1305c13b-200a-49e8-8083-80cd01552617" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="0529037a-02"
+root@wengi:~# 
+
+root@wengi:~# blkid |grep mmc
+/dev/mmcblk0p1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="50C8-AEAE" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="ba34081c-01"
+/dev/mmcblk0p2: LABEL="rootfs" UUID="fc7a1f9e-4967-4f41-a1f5-1b5927e6c5f9" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="ba34081c-02"
+/dev/mmcblk0p5: LABEL="writable" UUID="1240a8bb-bc9b-449a-91fe-e44d52b90f60" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="ba34081c-05"
+root@wengi:~# losetup -d $IMG
+root@wengi:~# 
+
+```
+
+OK, try again. Notice that /boot/firmware was not mounted. (Captured picture) but other stuff seems to be proceeding. It seems likely desirable to tweak the Systemd jobs that mount boot and root filesystems to do so by UUID. Boot process halted again on failure to mount `/boot/firmware`. Mounted manually and `<ctrl>D` allowed boot to complete. Woo! Need to lookup default login for Ubuntu server. S/B `ubuntu`:`ubuntu` but that's not working. :-/. May need to clear the password on the SD install and try again. Pushbutton works - Nice! Foumd `!` in the password field for `ubuntu` in `/etc/shadow` and removed it. Rebooting. Still hanging on mount for `/boot/firmware`. Login as `ubuntu` with no password prompt.
+
+Tracking sown the Systemd units that borked on mounting boot and root, I see they are both in `/run` (AKA `tmpfs`) and must be created during the boot process. I tweaked `/etc/fstab` to use `PARTUUID` to ID partitions and the subsequent reboot was uneventful. I wonder if I can use the label to ID the partition.
+
+```text
+e2label /dev/mmcblk0p5 ubuntu
+```
+
+Yes! That works. Next step, remap the MAC address.
+
+List of things to do fpr Ubuntu server
+
+* `PARTUUID` for `/etc/fstab`
+* remap MAC - really troublesome. Try removing cloud-init per <https://openzfs.github.io/openzfs-docs/Getting%20Started/Ubuntu/Ubuntu%2022.04%20Root%20on%20ZFS%20for%20Raspberry%20Pi.html#step-6-full-software-installation>
+* hostname
+* timezone
+* add user
+* consider replacing Netplan with systemd-networkd.
+* remove passwordless `sudo`
+
+## 2024-07-18 switch back to RpiOS
+
+```text
+mkdir -p /root/root-backup/
+tar cf /root/root-backup/boot-firmware-backup.tar /boot/firmware
+tar tf /root/root-backup/boot-firmware-backup.tar
+```
+
+And restore the RpiOS stuff
+
+```text
+mkdir -p /mnt/mmcblk0p2
+mount /dev/mmcblk0p2 /mnt/mmcblk0p2 
+tar tf /mnt/mmcblk0p2/root/root-backup/boot-firmware-backup.tar
+cd /
+rm -r /boot/firmware/*
+tar xf /mnt/mmcblk0p2/root/root-backup/boot-firmware-backup.tar
+shutdown -r now
+```
+
+And "Bob's your uncle" RpiOS is up and running. Next, thrash the switching process a bit. And ...
+
+Issue: Ubuntu expanded to use the rest of the space in the Extended partition. Two potential solution:
+
+1. Create a "blocker" partition following the new Logical partition.
+1. Create the new Logical partition at the end of the Extended partition. (seems better, just need to calculate the apopropriate starting sector or create the partition and then move it to the end of the Extended partition.)
+
+Full update/upgrade for RpiOS. Seems like all is good.
+
+And restore Ubuntu
+
+```text
+tar tf /media/hbarta/ubuntu/root/root-backup/boot-firmware-backup.tar
+cd /
+rm -r /boot/firmware/*
+tar xf /media/hbarta/ubuntu/root/root-backup/boot-firmware-backup.tar
+shutdown -r now
+```
+
+Full update/upgrade and all seems well. Back to `RpiOS`. And that works too.
