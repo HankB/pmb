@@ -86,17 +86,19 @@
       part_end: -1s
       part_type: "extended"
       state: present
+      unit: "s"
 
-  - name: Create logical partition in the root partition
+  - name: Create logical partition in the Extended partition
     become: yes
     tags: extended_part
     parted:
       device: "{{ device }}"
       number: 5
-      part_start: "-512s"
-      part_end: -1s
+      part_start: "{{ ext_part_start.stdout_lines[0]+8 }}s"
+      part_end: "100%"
       part_type: "logical"
       state: present
+      unit: "s"
 
 # mount root partition
 

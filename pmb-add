@@ -26,7 +26,7 @@ then
     usage
 fi
 
-# Check for partition2 (EXT4 partition)
+# Check for partition5 (Minimum partition when prepared, first Logical)
 
 if [ -e "${device}5" ]
 then

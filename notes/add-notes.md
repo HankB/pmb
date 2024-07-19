@@ -332,3 +332,85 @@ shutdown -r now
 ```
 
 Full update/upgrade and all seems well. Back to `RpiOS`. And that works too.
+
+## 2024-07-18 allocating space for additional OSs
+
+Need a strategy for carving up the additional space (in the Extended partition) for additional OSs. As an aside, it also appears that each OS may require special handling to work. Examples include:
+
+* Debian requires a logical partition at the end of the extended partition.
+* Ubuntu requires modification of Netplan configuration for MAC to support MAC spoofing.
+* Fedora (not even tried yet) starts with three partitions, FAT, EXT4 and btrfs.
+
+Possible strategy:
+
+1. (During init), create a logical partition that uses the entire Extended partition, label it `filler` presuming an empty partition vsn be labeled. Otherwise determine how to ID a logical partition with no format.
+1. Reduce the size of the `filler` partition by the space desired for the addition.
+1. Create a new logical partition in the available unused space, format it EXT4 and use for the addition.
+
+### Playing with partitioning
+
+Using a SATA SSD in a hot swap bay in an X86_64 desktop for convenience and speed. Drive comes in as `/dev/sdb` and is half of the previous system drive in a server. Just secure erase and move on.
+
+```text
+hdparm --user-master u --security-set-pass Eins /dev/sdb
+hdparm --security-erase Eins /dev/sdb
+```
+
+(Installed RpiOS using `rpi-imager` in `wengi` and back to `olive` w/out booting.)
+
+```text
+root@olive:~# sfdisk --list /dev/sdb
+Disk /dev/sdb: 223.57 GiB, 240057409536 bytes, 468862128 sectors
+Disk model: ST240HM000-1G515
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+Disklabel type: dos
+Disk identifier: 0x617a2abd
+
+Device     Boot    Start       End   Sectors   Size Id Type
+/dev/sdb1           8192   1056767   1048576   512M  c W95 FAT32 (LBA)
+/dev/sdb2        1056768  42999807  41943040    20G 83 Linux
+/dev/sdb3       42999808 468862127 425862320 203.1G  5 Extended
+root@olive:~# 
+```
+
+```text
+echo -e 'type=L' | sfdisk -N 5 /dev/sdb
+```
+
+Previous command creates a logical partition that uses all of the Extended partition.
+
+```text
+Device     Boot    Start       End   Sectors   Size Id Type
+/dev/sdb1           8192   1056767   1048576   512M  c W95 FAT32 (LBA)
+/dev/sdb2        1056768  42999807  41943040    20G 83 Linux
+/dev/sdb3       42999808 468862127 425862320 203.1G  5 Extended
+/dev/sdb5       43001856 468862127 425860272 203.1G 83 Linux
+```
+
+```text
+root@olive:~# blkid|grep sdb
+/dev/sdb1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="50C8-AEAE" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="617a2abd-01"
+/dev/sdb2: LABEL="rootfs" UUID="fc7a1f9e-4967-4f41-a1f5-1b5927e6c5f9" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="617a2abd-02"
+/dev/sdb5: PARTUUID="617a2abd-05"
+root@olive:~# 
+```
+
+`blkid` does not list the Extended partition and lists no `TYPE=` field for the logical partition (along with no `LABEL`, `UUID`, `BLOCK_SIZE` and `PARTUUID`). Now to to try to resize
+
+```text
+echo -e 'size=325860272' | sfdisk -N 5 /dev/sdb
+```
+
+This creates empty space at the end of the partition, but involves some gnarly arithmetic to get the desired space. A better strategy is to delete the `filler`, create the desired space and recreate the filler with remaining space. That provides the advantage that the required space can be provided in any format accepted by `sfdisk`.
+
+```text
+echo -e 'type=L' | sfdisk -N 5 /dev/sdb
+sfdisk --delete /dev/sdb 5
+echo -e 'type=L, size=10GiB' | sfdisk -N 5 /dev/sdb 
+##  BAD BAD BAD echo -e 'type=L' | sfdisk /dev/sdb
+echo -e 'type=L' | sfdisk -N 6 /dev/sdb
+```
+
+That "BAD" one just wiped the partition table and replaced it with a single partition. Need to specify the partition number. Time to return attention to `pmb-add`.
