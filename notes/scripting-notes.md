@@ -300,3 +300,7 @@ And sticking with `parted`. Trying
 1. primary partition - boots
 1. extended and full logical partition - boots
 1. extended partition with small logical partition at the end - boots!
+
+## 2024-07-19 pmb-init mod and Debian
+
+Modified `pmb-init` to use as much space in the extended partition for a logical partition (to accommodate `pmb-add`) and now Debian configured using `pmb-init` boots successfully.
