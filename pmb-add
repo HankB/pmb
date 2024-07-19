@@ -16,7 +16,7 @@ set -o nounset
 
 
 usage() {
-    echo device=/dev/sdb size=10G "$0" image=/path/to/compressed/Debian_image \(for example\)
+    echo device=/dev/sdb size=10G image=/path/to/compressed/Debian_image "$0" \(for example\)
     exit 1
 }
 
@@ -44,7 +44,7 @@ fi
 
 ## Now loop to find the highest numbered partition.
 
-for index in {5..10}
+for index in {5..20}
 do    
   echo $index
   if [ ! -e ${partbase}$index ]
@@ -53,5 +53,18 @@ do
   fi
 done
 
-filler=$(($index-1))
-echo "next available partition is $index and filler is $filler"
+newpart=$(($index-1))
+echo "next available partition is $index and new partition is $newpart"
+
+## Create the new partition
+
+sfdisk --delete ${device} ${newpart}
+if [ echo -e "type=L, size=${size}" | sfdisk -N ${newpart} ${device} ]
+then
+    echo fail
+else
+    echo all good
+fi
+
+mkfs.ext4 ${partbase}${newpart}
+echo -e 'type=L' | sfdisk -N ${index} ${device}
