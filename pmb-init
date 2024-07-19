@@ -46,3 +46,7 @@ echo  "size=${size}, type=L" | sfdisk -N 2 "${device}"
 ## Use rest of storage device for an Extended partition
 s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
 echo  "start=$s type=Ex" | sfdisk -N 3 "${device}"
+
+## Use all of Extended partition for a 
+s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
+echo  "start=$s" | sfdisk -N 5 "${device}"
