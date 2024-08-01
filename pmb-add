@@ -71,3 +71,9 @@ mkfs.ext4 "${partbase}${newpart}"
 echo "============================================= recreate the filler"
 
 echo -e 'type=L' | sfdisk -N "${index}" "${device}"
+
+echo "============================================= decompress OS image"
+
+# possible parsing bug in shellcheck?
+# shellcheck disable=SC2086
+unxz -k --stdout "${image}" >"/tmp/$(basename -s .xz  \"${image}\")"
