@@ -414,3 +414,32 @@ echo -e 'type=L' | sfdisk -N 6 /dev/sdb
 ```
 
 That "BAD" one just wiped the partition table and replaced it with a single partition. Need to specify the partition number. Time to return attention to `pmb-add`.
+
+## 2024-08-09 I'm back
+
+After setting this aside for a few days, I'm returning to it. My recollection is that the `pmb-add` script was working until the last commit. (Note to self - DO NOT COMMIT UNTIL I HAVE TESTED!) Reviewing the last commit at <https://github.com/HankB/pmb/commit/16b15d77b65553d56897268ad1f33e051b7b2450> (?). Looks like a `$` was lost on line 60. Still testing with `/dev/sdb`:
+
+```text
+device=/dev/sdb size=10G image=/home/hbarta/Downloads/Pi/Raspbian/image_2023-09-28-raspios-bookworm-arm64-lite.img.xz ./pmb-add
+```
+
+This test proceeded with the only exception being a prompt from `mke2fs` about an existing filesystem
+
+```text
+mke2fs 1.47.0 (5-Feb-2023)
+/dev/sdb12 contains a ext4 file system
+        created on Fri Jul 19 17:04:14 2024
+Proceed anyway? (y,N) y
+```
+
+This seems to be a result of the error caused during a previous run. Answered `y` and continued. A subsequent completed w/out any warnings. Now need to re-image the first OS and repeat this test.
+
+```text
+smartctl -a /dev/sdb
+blkdiscard -f /dev/sdb
+xzcat /home/hbarta/Downloads/Pi/Debian/20231109_raspi_4_bookworm.img.xz >/dev/sdb
+size=10G device=/dev/sdb ./pmb-init
+size=10G device=/dev/sdb ./pmb-init
+```
+
+Appears to work. Next step is to actually swap bewtween images to confirm. First test will be RpiOS install first, Debian Bookworm next.
