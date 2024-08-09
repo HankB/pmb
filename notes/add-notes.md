@@ -443,3 +443,5 @@ size=10G device=/dev/sdb ./pmb-init
 ```
 
 Appears to work. Next step is to actually swap bewtween images to confirm. First test will be RpiOS install first, Debian Bookworm next.
+
+1. `rpi-imager` Pi 4, Lite, no WiFi.
