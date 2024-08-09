@@ -57,7 +57,7 @@ do
   fi
 done
 
-newpart=$((index - 1))
+newpart=$(($index - 1))
 echo "next available partition is $index and new partition is $newpart"
 echo "============================================= partitions to use: $index and $newpart"
 
