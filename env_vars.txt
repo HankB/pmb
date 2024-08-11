@@ -1,0 +1,4 @@
+device=/dev/sdb
+size=10G
+image=/home/hbarta/Downloads/Pi/Raspbian/image_2023-09-28-raspios-bookworm-arm64-lite.img.xz
+
