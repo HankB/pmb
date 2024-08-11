@@ -71,6 +71,16 @@ I plan to use `bash` shell scripts to implement this. I suspect that Ansible mig
 
 Additional OS partitions will be in extended partitions to facilitate adding more than 2 other OS images.
 
+Tieing IP address to H/W MAC is fraught. Each OS would get the same IP sddress if using DHCP. For this reason it is convenient to provide `.link` files in `/etc/systemd/network` to provide spoofed MAC addresses for both Ethernet and WiFi (based on `Driver` matching.)
+
+The files that will be copied to boot partition (AKA FAT filesystem partition) will be copied to `/root/boot-backup/` and named `install-backup.tar` or `swap-backup.tar`. Compressing these did not seem to save much so that is not done. The difference is because the source directory will be `/boot/firmware` when preparing to swap and `/tmp/<some_dir>/` during initialization or addition and it is not clear if the same command can be used to extract to `/boot/firmware`. This may be a TODO.
+
+When a swap is performed, the `/boot/firmware/cmdline.txt` will be adjusted to select the root partition by `PARTUUID` as revealed by `blkid`.
+
+Potential swap targets will be identified by the root partition `LABEL`, again as identified by `blkid`. The partition labels will be provided when the OSs are installed (either by `pmb-init` or `pmb-add`) and the partitions will be labeled accordingly. Some OSs select the root partition by label and this leads to issues when there are multiple installs. The boot process may select the wrong root partition and the partition lapel may be a convenient way to identify OS partitions. An alternative would be to record partition IDs and OS names ion a text file somewhere and use that to identify optiosn available when swapping.
+
+For some OSs, it may be useful to configure some things during `pmb-init` or `pmb-add`. (user name, SSH credentials, hostname etc.) 
+
 ## Details
 
 ### Initial provisioning
