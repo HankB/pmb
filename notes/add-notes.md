@@ -442,9 +442,19 @@ size=10G device=/dev/sdb ./pmb-init
 size=10G device=/dev/sdb ./pmb-init
 ```
 
-Appears to work. Next step is to actually swap bewtween images to confirm. First test will be RpiOS install first, Debian Bookworm next.
+Appears to work. (Not sure why I ran `pmb-init` twice ...)
+
+Next step is to actually swap bewtween images to confirm. First test will be RpiOS install first, Debian Bookworm next. (Testing on Pi 5 `wengi`)
 
 1. `rpi-imager` Pi 4, Lite, no WiFi.
+1. `device=/dev/sda size=10G ./pmb-init`
+1. SSD to Pi 4B, boot - OK
+1. SSD to Pi 5
+1. `image=/home/hbarta/Downloads/Pi/Debian/20231109_raspi_4_bookworm.img.xz size=12GiB device=/dev/sda ./pmb-add`
+1. SSD to Pi 4B and boot - boot OK.
+1. SSD to Pi 5
+
+Starting [notes on swap](./swap-notes.md#2024-08-09-manual-swap) for swap. and realize that `pmb-add` is incomplete.
 
 ## 2024-08-11 more work for pmb-add
 
