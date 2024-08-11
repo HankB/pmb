@@ -74,6 +74,46 @@ echo -e 'type=L' | sfdisk -N "${index}" "${device}"
 
 echo "============================================= decompress OS image"
 
-# possible parsing bug in shellcheck?
-# shellcheck disable=SC2086
-unxz -k --stdout "${image}" >"/tmp/$(basename -s .xz  \"${image}\")"
+
+# extract imstallation image
+
+image_file=/tmp/$(basename -s .xz  "${image}")
+unxz -k --stdout "${image}" >"$image_file"
+
+# Create mount points
+# Random dir name from
+# https://stackoverflow.com/questions/2793812/generate-a-random-filename-in-unix-shell
+
+boot_mnt=/tmp/$(date +%S%N)
+mkdir "$boot_mnt"
+root_mnt=/tmp/$(date +%S%N)
+mkdir "$root_mnt"
+target_mnt=/tmp/$(date +%S%N)
+mkdir "$target_mnt"
+
+# Configure and mount loop devices for the image to be installed
+
+img_loop_dev=$(losetup --find --partscan --read-only --show "$image_file")
+mount "${img_loop_dev}p1" "$boot_mnt"
+mount "${img_loop_dev}p2" "$root_mnt"
+
+# Mount the partition to "install" to.
+
+mount "${partbase}${newpart}" "$target_mnt" 
+
+# copy root files
+
+rsync -a "$root_mnt"/ "$target_mnt"
+
+# archive boot files
+
+mkdir "$target_mnt"/root/root-backup/
+tar cf "$target_mnt"/root/root-backup/install-backup.tar "$root_mnt"
+
+### cleanup
+
+umount "$boot_mnt" "$root_mnt" "$target_mnt"
+losetup -d "$img_loop_dev"
+rm -r "$boot_mnt" "$root_mnt" "$target_mnt" "${image_file}"
+
+echo "$image successfully installed to ${partbase}${newpart}"
