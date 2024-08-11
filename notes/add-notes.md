@@ -445,3 +445,14 @@ size=10G device=/dev/sdb ./pmb-init
 Appears to work. Next step is to actually swap bewtween images to confirm. First test will be RpiOS install first, Debian Bookworm next.
 
 1. `rpi-imager` Pi 4, Lite, no WiFi.
+
+## 2024-08-11 more work for pmb-add
+
+At present the script ends with uncompressing the inage to install to `/tmp`. Additional work to do is:
+
+1. Loop mount both partitions in the image.
+1. Mount the newly created partition.
+1. Copy contents of root partition to the new partition (rsync.)
+1. Copy the contents of the boot partition to a directory in the new partition (tar.)
+1. Unmount all partitions and remove mount points.
+1. Remove uncompressed image.
