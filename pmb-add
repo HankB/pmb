@@ -14,11 +14,26 @@ set -o nounset
 #   (e.g. device=/dev/sdb or device=/dev/mmcblk0)
 # * path to compressed Debian image file
 
-
 usage() {
-    echo device=/dev/sdb size=10G image=/path/to/compressed/Debian_image "$0" \(for example\)
+    echo "device=/dev/sdb size=10G image=/path/to/compressed/image label=rpios $0 [settings_file] (for example)"
+    echo "    -or-"
+    echo "$0 [settings_file]"
     exit 1
 }
+
+# Check for first arg - settings file
+if [[ -v 1 ]]
+then
+    if [ -e "$1" ]
+    then
+        echo sourcing "$1"
+        # shellcheck disable=SC1090 # ShellCheck can't follow non-const...
+        source "$1"
+    else
+        echo "$1 not found"
+        usage
+    fi
+fi
 
 # verify that needed CMD line args are provided
 if [[ ! -v device ]] || [[ ! -v size ]] || [[ ! -v image ]]
