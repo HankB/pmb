@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Helper for Debian installs,
+# meant to be sourced from pmb-init and pmb-add scripts
+

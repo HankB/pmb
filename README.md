@@ -14,9 +14,10 @@ Boot multiple operating systems from a single media device (SD, SSD, etc.) The g
 
 ## TODO
 
-* Provide additional capabilities for `pmb-init` to match the Ansible playboiok used for Debian.
-* Modify `pmb-init` to work with Debian.
-* Implerment a .env file for `pmb-init`.
+* Provide additional capabilities for `pmb-init` to match the Ansible playboiok used for Debian. This will be in the form of a "helper" which will be sourced by `pmb-init` and `pmb-add` and which will have access to all ENV vars in the main script. Specific adds for Debian (see <https://raspi.debian.net/defaults-and-settings/> for detail) include
+    * hostname
+    * root_authorized_key (This will allow the user to SSH into the install from the PC on which the script is run.)
+* Add spoofing for Ethernet and Wifi MAC addresses.
 
 ## Usage:
 
