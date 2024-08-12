@@ -79,7 +79,13 @@ When a swap is performed, the `/boot/firmware/cmdline.txt` will be adjusted to s
 
 Potential swap targets will be identified by the root partition `LABEL`, again as identified by `blkid`. The partition labels will be provided when the OSs are installed (either by `pmb-init` or `pmb-add`) and the partitions will be labeled accordingly. Some OSs select the root partition by label and this leads to issues when there are multiple installs. The boot process may select the wrong root partition and the partition lapel may be a convenient way to identify OS partitions. An alternative would be to record partition IDs and OS names ion a text file somewhere and use that to identify optiosn available when swapping.
 
-For some OSs, it may be useful to configure some things during `pmb-init` or `pmb-add`. (user name, SSH credentials, hostname etc.) 
+For some OSs, it may be useful to configure some things during `pmb-init` or `pmb-add`. (user name, SSH credentials, hostname etc.) The add/init scripts will be modified to support execution of such helpers.
+
+Using partition labels alone seems like a troublesome way to identify OS partitions since a user (me!) will likely create additional partitions and label them. Instead an extra logical partition will be created in the extended partition of nominal size (4GB?) and which will contain a list of the partitions. These will include `label`, `PARTUUID` and partition in a format amenable to usage by a bash script such as
+
+```text
+label=RpiOS partuuid=1aa9757c-02 partition=/dev/mmcblk0p2
+```
 
 ## Details
 
@@ -116,6 +122,11 @@ Details:
 * Copy the root partition to the new added partition.
 * "Backup" the boot (FAT) partition to the new partition as was done when swapping
 OSs. This eliminates the need to identify which OS was previously active and back it up before copying the new boot sector in place.
+
+### Swapping to another OS.
+
+* Identify candidates by label as shown by `lsblk`. Q: How will this differentiate between OS installations and other partitions the user may create? It seems like it will be necessary to keep a table of OS installations and their partitions, perhaps in the original OS installation filesystem. Or does it make sense to create a small filesystem to include this?
+* Confirm settings in `/boot/firmware/cmdline.txt` and `/etc/fstab` to make certain they have not been modified by an upgrade since originally performed.
 
 ## Alternatives
 
