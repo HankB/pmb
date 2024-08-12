@@ -14,12 +14,12 @@ set -o nounset
 #   (e.g. device=/dev/sdb or device=/dev/mmcblk0)
 
 usage() {
-    echo device=/dev/sdb size=10G "$0" \(for example\)
+    echo device=/dev/sdb size=10G label=rpios "$0" \(for example\)
     exit 1
 }
 
 # verify that needed CMD line args are provided
-if [[ ! -v device ]] || [[ ! -v size ]]
+if [[ ! -v device ]] || [[ ! -v size ]] || [[ ! -v label ]]
 then
     usage
 fi
@@ -42,6 +42,7 @@ umount "$part2" >/dev/null 2>&1 || true
 
 ## Resize root (EXT4) partition
 echo  "size=${size}, type=L" | sfdisk -N 2 "${device}"
+e2label "$part2" "$label"
 
 ## Use rest of storage device for an Extended partition
 s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))

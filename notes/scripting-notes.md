@@ -304,3 +304,32 @@ And sticking with `parted`. Trying
 ## 2024-07-19 pmb-init mod and Debian
 
 Modified `pmb-init` to use as much space in the extended partition for a logical partition (to accommodate `pmb-add`) and now Debian configured using `pmb-init` boots successfully.
+
+## 2024-08-11 label root partition
+
+In `pmb-init` for now. Seems like the followinfg should work, but it does not.
+
+```text
+sfdisk --part-label /dev/mmcblk0 2
+```
+
+```text
+root@wengi:/home/hbarta/Programming/pmb# sfdisk --part-label /dev/mmcblk0 2
+sfdisk: /dev/mmcblk0: partition 2: failed to get partition name
+root@wengi:/home/hbarta/Programming/pmb# 
+```
+
+`gparted` seems to be able to do this so will try (from <https://askubuntu.com/questions/1103569/how-do-i-change-the-label-reported-by-lsblk>)
+
+```text
+e2label /dev/mmcblk0p2 rpios
+```
+
+```text
+root@wengi:/home/hbarta/Programming/pmb# e2label /dev/mmcblk0p2 RpiOS
+root@wengi:/home/hbarta/Programming/pmb# blkid|grep /dev/mmcblk0p2
+/dev/mmcblk0p2: LABEL="RpiOS" UUID="93c89e92-8f2e-4522-ad32-68faed883d2f" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="fb33757d-02"
+root@wengi:/home/hbarta/Programming/pmb# 
+```
+
+And confirmed using `gparted` and even respects caps!
