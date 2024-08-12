@@ -26,6 +26,7 @@ then
     if [ -e "$1" ]
     then
         echo sourcing "$1"
+        # shellcheck disable=SC1090 # ShellCheck can't follow non-const...
         source "$1"
     else
         echo "$1 not found"
