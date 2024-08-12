@@ -36,7 +36,7 @@ then
 fi
 
 # verify that needed CMD line args are provided
-if [[ ! -v device ]] || [[ ! -v size ]] || [[ ! -v image ]]
+if [[ ! -v device ]] || [[ ! -v size ]] || [[ ! -v image ]] || [[ ! -v label ]]
 then
     usage
 fi
@@ -81,7 +81,7 @@ echo "============================================= partitions to use: $index an
 sfdisk --delete "${device}" "${newpart}"
 echo -e "type=L, size=${size}" | sfdisk -N "${newpart}" "${device}"
 
-mkfs.ext4 "${partbase}${newpart}"
+mkfs.ext4 -L "$label" "${partbase}${newpart}"
 
 echo "============================================= recreate the filler"
 
