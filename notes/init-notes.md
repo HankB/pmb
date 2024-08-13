@@ -1,8 +1,8 @@
 # scripting notes
 
-Trying out commands that will be used to script some operations.
+Trying out commands that will be used to script The init operation. This is intended to be used after imaging the disk (`rpi-imager` or `xzcat > /dev/<storge>`) and before first boot.
 
-## 2024-07-06 pmb-init.sh
+## 2024-07-06 pmb-init
 
 Initial conditions: Pi image written to the media (SD card) and before booting. Operations required.
 
@@ -333,3 +333,30 @@ root@wengi:/home/hbarta/Programming/pmb#
 ```
 
 And confirmed using `gparted` and even respects caps!
+
+## 2024-08-12 work on pmb-init
+
+It sure takes a long time for the Seagate SSD to report clear following `blkdiscard.`
+
+```text
+root@olive:~# partprobe
+Error: Partition(s) 6 on /dev/sdb have been written, but we have been unable to inform the kernel of the change, probably because it/they are in use.  As a result, the old partition(s) will remain in use.  You should reboot now before making further changes.
+root@olive:~# blkid|grep sdb
+/dev/sdb6: UUID="ac38a59a-9811-4cb1-abeb-9d959992167d" BLOCK_SIZE="4096" TYPE="ext4"
+root@olive:~# 
+```
+
+R&I SSD and made it worse.
+
+```text
+root@olive:~# blkid|grep sdb
+/dev/sdb6: UUID="ac38a59a-9811-4cb1-abeb-9d959992167d" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="7c0388e4-06"
+/dev/sdb2: LABEL="rootfs" UUID="56f80fa2-e005-4cca-86e6-19da1069914d" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="7c0388e4-02"
+/dev/sdb7: PARTUUID="7c0388e4-07"
+/dev/sdb5: UUID="2e0c51f2-1c2a-4c4f-914f-86996a95dad2" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="7c0388e4-05"
+/dev/sdb3: PARTUUID="7c0388e4-03"
+/dev/sdb1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="91FE-7499" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="7c0388e4-01"
+root@olive:~# 
+```
+
+Lacking confidence, switching to 256GB Crucial MX500. That shows clear following a secure erase.
