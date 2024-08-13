@@ -15,7 +15,6 @@ Boot multiple operating systems from a single media device (SD, SSD, etc.) The g
 ## TODO
 
 * Add spoofing for Ethernet and Wifi MAC addresses.
-* Add an ausiliary partition that holds a table of installed OSs.
 
 ### Roadmap
 

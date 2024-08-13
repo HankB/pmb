@@ -41,17 +41,18 @@ then
 fi
 
 # Check for partition2 (EXT4 partition)
-
 if [ -e "${device}2" ]
 then
     # shellcheck disable=SC2034 # unused here, provided for helper script
     part1=${device}1
     part2=${device}2
+    part5=${device}5
 elif [ -e "${device}p2" ]
 then
     # shellcheck disable=SC2034 # unused here, provided for helper script
     part1="${device}p1"
     part2="${device}p2"
+    part5="${device}p5"
 else
     echo "Can't find partition 2 on $device"
     usage
@@ -69,11 +70,23 @@ s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
 echo  "start=$s type=Ex" | sfdisk -N 3 "${device}"
 
 # TODO add command to add a small EXT4 logical partition 
+echo -e "type=L, size=4GiB" | sfdisk -N 5 "${device}"
+mkfs.ext4 -L pmb-system -F -F "${part5}"
 
-## Use all of Extended partition for a logical (?) partition
-s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
-s=$((s+8))
-echo  "start=$s" | sfdisk -N 5 "${device}"
+## Use rest of Extended partition for an empty logical (?) partition
+echo  "type=L" | sfdisk -N 6 "${device}"
+
+# mount pmb-system before calling a helper
+pmb_system_mnt=/tmp/$(date +%S%N)
+mkdir "$pmb_system_mnt"
+mount "${part5}" "$pmb_system_mnt"
+
+## Add line to OS tracking file.
+# Regex for PARTUUID provided by:
+# https://stackoverflow.com/questions/13565658/right-tool-to-filter-the-uuid-from-the-output-of-blkid-program-using-grep-cut
+partuuid=$(blkid|grep /dev/sdc2|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+')
+echo "label=\"$label\" $partuuid partition=\"$part2\"" \
+    >"${pmb_system_mnt}/installed-OS"
 
 ## source helper if provided and found
 if [[ -v helper ]]
@@ -86,3 +99,5 @@ then
         echo "helper script \"$helper\" not found"
     fi
 fi
+
+umount "$pmb_system_mnt"

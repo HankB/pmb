@@ -360,3 +360,12 @@ root@olive:~#
 ```
 
 Lacking confidence, switching to 256GB Crucial MX500. That shows clear following a secure erase.
+
+## 2024-08-13 data partition
+
+Create a Logical partition at the end of the Extended partition to hold a table that will ID the OSs installed.
+
+```text
+time -p xzcat /home/hbarta/Downloads/Pi/Debian/20231109_raspi_4_bookworm.img.xz >/dev/sdc
+./pmb-init Debian_bookworm_vars
+```
