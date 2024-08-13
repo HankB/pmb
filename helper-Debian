@@ -1,5 +1,44 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Helper for Debian installs,
 # meant to be sourced from pmb-init and pmb-add scripts
 
+# clean up previous
+if [ -e /tmp/sysconf.txt ]
+then
+    rm /tmp/sysconf.txt || true
+fi
+
+# hostname?
+if [[ -v hostname ]]
+then
+    echo "hostname=${hostname}" >> /tmp/sysconf.txt
+fi
+
+# public key for root?
+if [[ -v root_authorized_key ]]
+then
+    echo "root_authorized_key=$root_authorized_key" >> /tmp/sysconf.txt
+fi
+
+# If `/tmp/sysconf.txt` was created, add it as appropriate
+if [ -e /tmp/sysconf.txt ]
+then
+    case $(basename "$0") in 
+        "pmb-add")
+            echo "add to TAR"
+            ;;
+        "pmb-init")
+            boot_mnt=/tmp/$(date +%S%N)
+            mkdir "$boot_mnt"
+            mount "$part1" "$boot_mnt"
+            echo "add to /boot/firmware"
+            mv /tmp/sysconf.txt "$boot_mnt"
+            umount "$boot_mnt"
+            ;;
+        *)
+            echo "who is $0 which called 'helper-debian'"
+            exit 1
+            ;;
+    esac
+fi
