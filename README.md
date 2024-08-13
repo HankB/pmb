@@ -14,10 +14,16 @@ Boot multiple operating systems from a single media device (SD, SSD, etc.) The g
 
 ## TODO
 
-* Provide additional capabilities for `pmb-init` to match the Ansible playboiok used for Debian. This will be in the form of a "helper" which will be sourced by `pmb-init` and `pmb-add` and which will have access to all ENV vars in the main script. Specific adds for Debian (see <https://raspi.debian.net/defaults-and-settings/> for detail) include
-    * hostname
-    * root_authorized_key (This will allow the user to SSH into the install from the PC on which the script is run.)
 * Add spoofing for Ethernet and Wifi MAC addresses.
+* Add an ausiliary partition that holds a table of installed OSs.
+
+### Roadmap
+
+* `pmb-init` - WIP - Start with storage that has been initialized but before first boot and prepare for additional OS installs.
+* `pmb-add` - WIP - Allocate space for and add an additional OS, copying from the install image.
+* `pmb-swap` - not started - Swap between the current OS and one of the others.
+* `pmb-replace` - not started - Replace an existing install (not the active one!) with another OS or fresh install.
+* `pmb-copy` - not started - Copy an existing install from other media to the current media.
 
 ## Usage:
 
