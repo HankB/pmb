@@ -44,9 +44,13 @@ fi
 
 if [ -e "${device}2" ]
 then
+    # shellcheck disable=SC2034 # unused here, provided for helper script
+    part1=${device}1
     part2=${device}2
 elif [ -e "${device}p2" ]
 then
+    # shellcheck disable=SC2034 # unused here, provided for helper script
+    part1="${device}p1"
     part2="${device}p2"
 else
     echo "Can't find partition 2 on $device"
@@ -56,7 +60,7 @@ fi
 # make sure $part2 is not mounted
 umount "$part2" >/dev/null 2>&1 || true
 
-## Resize root (EXT4) partition
+## Resize root (EXT4) partition 
 echo  "size=${size}, type=L" | sfdisk -N 2 "${device}"
 e2label "$part2" "$label"
 
@@ -64,7 +68,21 @@ e2label "$part2" "$label"
 s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
 echo  "start=$s type=Ex" | sfdisk -N 3 "${device}"
 
-## Use all of Extended partition for a 
+# TODO add command to add a small EXT4 logical partition 
+
+## Use all of Extended partition for a logical (?) partition
 s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
 s=$((s+8))
 echo  "start=$s" | sfdisk -N 5 "${device}"
+
+## source helper if provided and found
+if [[ -v helper ]]
+then
+    if [ -e "$helper" ]
+    then
+        # shellcheck disable=SC1090 # ShellCheck can't follow non-const...
+        source "$helper"
+    else
+        echo "helper script \"$helper\" not found"
+    fi
+fi
