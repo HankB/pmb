@@ -21,13 +21,6 @@ then
     echo "root_authorized_key=$root_authorized_key" >> /tmp/sysconf.txt
 fi
 
-# Mount boot and root partitions
-boot_mnt=/tmp/$(date +%S%N)
-mkdir "$boot_mnt"
-mount "$part1" "$boot_mnt"
-root_mnt=/tmp/$(date +%S%N)
-mkdir "$root_mnt"
-mount "$part2" "$root_mnt"
 
 # If `/tmp/sysconf.txt` was created, add it as appropriate
 if [ -e /tmp/sysconf.txt ]
@@ -37,8 +30,26 @@ then
             echo "add to TAR"
             ;;
         "pmb-init")
+            # Mount boot and root partitions
+            boot_mnt=/tmp/$(date +%S%N)
+            mkdir "$boot_mnt"
+            mount "$part1" "$boot_mnt"
+            root_mnt=/tmp/$(date +%S%N)
+            mkdir "$root_mnt"
+            mount "$part2" "$root_mnt"
+
             echo "add to /boot/firmware"
             mv /tmp/sysconf.txt "$boot_mnt"
+
+            # tweak the root specification in `cmdline.txt` and 
+            # "$root_mnt"/etc/default/raspi-firmware
+            sed -i "s/LABEL=RASPIROOT/PARTUUID=${partuuid}/" "$boot_mnt"/cmdline.txt
+            # comment `ROOTPART=LABEL=RASPIROOT` in "$root_mnt"/etc/default/raspi-firmware
+            sed -i "s/^ROOTPART=LABEL=RASPIROOT/ROOTPART=PARTUUID=${partuuid}/" "$root_mnt"/etc/default/raspi-firmware
+
+            umount "$boot_mnt" "$root_mnt"
+            rm -r "$boot_mnt" "$root_mnt"
+
             ;;
         *)
             echo "who is $0 which called 'helper-debian'"
@@ -46,13 +57,3 @@ then
             ;;
     esac
 fi
-
-# tweak the root specification in `cmdline.txt` and 
-# "$root_mnt"/etc/default/raspi-firmware
-
-sed -i "s/LABEL=RASPIROOT/PARTUUID=${partuuid}/" "$boot_mnt"/cmdline.txt
-# comment `ROOTPART=LABEL=RASPIROOT` in "$root_mnt"/etc/default/raspi-firmware
-sed -i "s/^ROOTPART=LABEL=RASPIROOT/ROOTPART=PARTUUID=${partuuid}/" "$root_mnt"/etc/default/raspi-firmware
-
-umount "$boot_mnt" "$root_mnt"
-rm -r "$boot_mnt" "$root_mnt"
