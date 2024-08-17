@@ -366,6 +366,16 @@ Lacking confidence, switching to 256GB Crucial MX500. That shows clear following
 Create a Logical partition at the end of the Extended partition to hold a table that will ID the OSs installed.
 
 ```text
-time -p xzcat /home/hbarta/Downloads/Pi/Debian/20231109_raspi_4_bookworm.img.xz >/dev/sdc
+time -p xzcat /home/hbarta/Downloads/Pi/Debian/20231109_raspi_4_bookworm.img.xz >/dev/sda
 ./pmb-init Debian_bookworm_vars
 ```
+
+## 2024-08-17 does not come up fully
+
+Seems to recognize the keyboard but not seeing a LAN connection (maybe) and does not respond to keyboard input. Testing RpiOS as first install next. But first take a look at the partitions on the SSD. Ah... `cmdline.txt` lists 
+
+```text
+console=tty0 console=ttyS1,115200 root=LABEL=RASPIROOT rw fsck.repair=yes net.ifnames=0 rootwait 
+```
+
+Need code to fix `cmdline.txt` and `/etc/default/raspi-firmware` which will be used to regenerate `cmdline.txt` and must include `ROOTPART=PARTUUID=${partuuid}`.
