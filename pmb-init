@@ -84,8 +84,8 @@ mount "${part5}" "$pmb_system_mnt"
 ## Add line to OS tracking file.
 # Regex for PARTUUID provided by:
 # https://stackoverflow.com/questions/13565658/right-tool-to-filter-the-uuid-from-the-output-of-blkid-program-using-grep-cut
-partuuid=$(blkid|grep /dev/sdc2|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+')
-echo "label=\"$label\" $partuuid partition=\"$part2\"" \
+partuuid=$(blkid|grep "${part2}"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
+echo "\"$label\" \"$partuuid\" \"$part2\"" \
     >"${pmb_system_mnt}/installed-OS"
 
 ## source helper if provided and found
@@ -101,3 +101,4 @@ then
 fi
 
 umount "$pmb_system_mnt"
+rm -r "$pmb_system_mnt"
