@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Generic helper functions intended to be shared among the various
+# 'pmb_<do-something>' scripts.
+
+## Function to write Systemd .link files to '/etc/systemd/network'
+# requires that the root filesystem be mounted and the mount point
+# in $$target_mnt. It will use (if provided.)
+
+# $Ethernet_MAC, $Ethernet_match
+# $Wifi_MAC, $Wifi_match
+
+spoof_mac() {
+    ### Ethernet
+    if [[ -v Ethernet_MAC ]]
+    then
+        if  [[ ! -v Ethernet_match ]]
+        then
+            Ethernet_match="Driver=macb bcmgenet r8152"
+        fi
+        cat <<EOF >"${target_mnt}/etc/systemd/network/00-Ethernet.link"
+[Match]
+$Ethernet_match
+
+[Link]
+MACAddress=$Ethernet_MAC
+EOF
+    fi
+
+    ### WiFi
+    if [[ -v Wifi_MAC ]]
+    then
+        if  [[ ! -v Wifi_match ]]
+        then
+            Wifi_match="Driver=rtl8xxxu brcmfmac"
+        fi
+        cat <<EOF >"${target_mnt}/etc/systemd/network/00-Wifi.link"
+[Match]
+$Wifi_match
+
+[Link]
+MACAddress=$Wifi_MAC
+EOF
+    fi
+
+}
