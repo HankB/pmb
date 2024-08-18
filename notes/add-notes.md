@@ -458,7 +458,7 @@ Starting [notes on swap](./swap-notes.md#2024-08-09-manual-swap) for swap. and r
 
 ## 2024-08-11 more work for pmb-add
 
-At present the script ends with uncompressing the inage to install to `/tmp`. Additional work to do is:
+At present the script ends with uncompressing the image to install to `/tmp`. Additional work to do is:
 
 1. Loop mount both partitions in the image.
 1. Mount the newly created partition.
