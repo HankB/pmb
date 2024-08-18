@@ -10,5 +10,6 @@ Then the strategy becomes
 1. add `root_authorized_key` (if provided)
 1. add `hostname` (if provided)
 1. move `sysconf.txt` to boot partition (`pmb-init`) or add it to the tar archive `/root/boot-backup/install-backup.tar` in the new root partition (`pmb-add`).
+1. Tweak (what will eventually become)  `/boot/firmware/cmdline.txt` and `/etc/default/raspi-firmware` to get the root device properly specified. (`pmb-init`, `pmb-add`)
 
-Note: `pmb-init` does not mount boot/root partitions so it will be necessary to mount/umount the boot partition.
+Note: `pmb-init` does not mount boot/root partitions so it will be necessary to mount/umount the boot partition. Maybe it should. `pmb-init` will need to mount the root partition to spoof MAC addresses.
