@@ -379,3 +379,7 @@ console=tty0 console=ttyS1,115200 root=LABEL=RASPIROOT rw fsck.repair=yes net.if
 ```
 
 Need code to fix `cmdline.txt` and `/etc/default/raspi-firmware` which will be used to regenerate `cmdline.txt` and must include `ROOTPART=PARTUUID=${partuuid}`.
+
+## 2024-08-17 test RpiOS
+
+Works as desired.
