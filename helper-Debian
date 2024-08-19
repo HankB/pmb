@@ -34,21 +34,18 @@ then
             boot_mnt=/tmp/$(date +%S%N)
             mkdir "$boot_mnt"
             mount "$part1" "$boot_mnt"
-            root_mnt=/tmp/$(date +%S%N)
-            mkdir "$root_mnt"
-            mount "$part2" "$root_mnt"
 
             echo "add to /boot/firmware"
             mv /tmp/sysconf.txt "$boot_mnt"
 
             # tweak the root specification in `cmdline.txt` and 
-            # "$root_mnt"/etc/default/raspi-firmware
+            # "$target_mnt"/etc/default/raspi-firmware
             sed -i "s/LABEL=RASPIROOT/PARTUUID=${partuuid}/" "$boot_mnt"/cmdline.txt
-            # comment `ROOTPART=LABEL=RASPIROOT` in "$root_mnt"/etc/default/raspi-firmware
-            sed -i "s/^ROOTPART=LABEL=RASPIROOT/ROOTPART=PARTUUID=${partuuid}/" "$root_mnt"/etc/default/raspi-firmware
+            # comment `ROOTPART=LABEL=RASPIROOT` in "$target_mnt"/etc/default/raspi-firmware
+            sed -i "s/^ROOTPART=LABEL=RASPIROOT/ROOTPART=PARTUUID=${partuuid}/" "$target_mnt"/etc/default/raspi-firmware
 
-            umount "$boot_mnt" "$root_mnt"
-            rm -r "$boot_mnt" "$root_mnt"
+            umount "$boot_mnt" 
+            rm -r "$boot_mnt"
 
             ;;
         *)
