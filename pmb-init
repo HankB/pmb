@@ -65,8 +65,9 @@ fi
 umount "$part2" >/dev/null 2>&1 || true
 
 ## Resize root (EXT4) partition 
-echo  "size=${size}, type=L" | sfdisk -N 2 "${device}"
+echo  "size=${size}" | sfdisk -N 2 "${device}"
 e2label "$part2" "$label"
+resize2fs "$part2"
 
 ## Use rest of storage device for an Extended partition
 s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
