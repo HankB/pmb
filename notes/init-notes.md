@@ -379,3 +379,26 @@ console=tty0 console=ttyS1,115200 root=LABEL=RASPIROOT rw fsck.repair=yes net.if
 ```
 
 Need code to fix `cmdline.txt` and `/etc/default/raspi-firmware` which will be used to regenerate `cmdline.txt` and must include `ROOTPART=PARTUUID=${partuuid}`.
+
+## 2024-08-17 test RpiOS
+
+Works as desired.
+
+## 2024-08-19 retest Debian
+
+Testing bookworm with most recent changes (spoof MAC) and see that the image boots but comes up with ~2GB root partition instead of 10G as desired. Investigating. On `olive` `disks` shows `/dev/dsba2` as "11 GB (10,737,418,240 bytes)" which seems about right. Mounting it and see
+
+```text
+hbarta@olive:~/Programming/pmb$ df -h /media/hbarta/Debian12/
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda2       1.9G  763M  1.1G  43% /media/hbarta/Debian12
+hbarta@olive:~/Programming/pmb$ 
+```
+
+Did something interfere with the resize? The command is
+
+```text
+echo  "size=${size}, type=L" | sfdisk -N 2 "${device}"
+```
+
+and the `type=L` seems suspicious as this should be a primary partition here. Try removing that and see what happens. No change. Perhaps resize the Debian root in `helper-Debian`

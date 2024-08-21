@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Bash3 Boilerplate. Copyright (c) 2014, kvz.io
+
+set -o errexit
+set -o pipefail
+set -o nounset
+############### end of Boilerplate
+
+source pmb-helpers
+
+target_mnt=/tmp
+mkdir -p "${target_mnt}/etc/systemd/network"
+
+Ethernet_MAC="e4:5f:01:e3:49:90"
+Wifi_MAC="e4:5f:01:e3:49:91"
+
+spoof_mac
