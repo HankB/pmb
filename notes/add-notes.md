@@ -460,9 +460,12 @@ Starting [notes on swap](./swap-notes.md#2024-08-09-manual-swap) for swap. and r
 
 At present the script ends with uncompressing the image to install to `/tmp`. Additional work to do is:
 
-1. Loop mount both partitions in the image.
-1. Mount the newly created partition.
-1. Copy contents of root partition to the new partition (rsync.)
-1. Copy the contents of the boot partition to a directory in the new partition (tar.)
+1. Loop mount both partitions in the image. (done)
+1. Mount the newly created partition and format to EXT4. (done)
+1. Uncompress the image (to be installed) and loop mount both partitions. (done)
+1. Copy contents of root partition to the new partition (rsync.) (done)
+1. Copy the contents of the boot partition to a directory in the new partition (tar.) (done)
+1. source generic helpers and spoof MAC addresses
+1. Call any specified helper
 1. Unmount all partitions and remove mount points.
 1. Remove uncompressed image.
