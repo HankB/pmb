@@ -401,4 +401,8 @@ Did something interfere with the resize? The command is
 echo  "size=${size}, type=L" | sfdisk -N 2 "${device}"
 ```
 
-and the `type=L` seems suspicious as this should be a primary partition here. Try removing that and see what happens. No change. Perhaps resize the Debian root in `helper-Debian`
+and the `type=L` seems suspicious as this should be a primary partition here. Try removing that and see what happens. No change. Perhaps resize the Debian root in `helper-Debian`. That seems to work.
+
+## 2024-08-21 testing pmb-init with RpiOS
+
+On latest changes. First boot (login) seems OK. Upgrading 91 packages. Reboot, still OK.
