@@ -21,6 +21,9 @@ usage() {
     exit 1
 }
 
+# pull in gerneral purpose helpers
+source $(dirname $0)/pmb-helpers
+
 # Check for first arg - settings file
 if [[ -v 1 ]]
 then
@@ -35,7 +38,7 @@ then
     fi
 fi
 
-# verify that needed CMD line args are provided
+# verify that required ENV vars are provided
 if [[ ! -v device ]] || [[ ! -v size ]] || [[ ! -v image ]] || [[ ! -v label ]]
 then
     usage
