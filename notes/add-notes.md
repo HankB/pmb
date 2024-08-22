@@ -474,3 +474,5 @@ At present the script ends with uncompressing the image to install to `/tmp`. Ad
 ## 2024-08-21 testing
 
 The tar which should only include the firmware stuff seems to include everything. Fixed.
+
+Tested `pmb-init` (RpiOS) and `pmb-add` (Debian12) and files for Debian look good. RpiOS upgrading 19 packages and will [manually swap to Debian12](./swap-notes.md#2024-08-21-manual-swap).
