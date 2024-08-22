@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# Helper for RpiOS installs,
+# meant to be sourced from pmb-init and pmb-add scripts
+
+# Disable passwordless sudo
+mv  "$target_mnt"/etc/sudoers.d/010_pi-nopasswd \
+    "$target_mnt"/etc/sudoers.d/010_pi-nopasswd~
