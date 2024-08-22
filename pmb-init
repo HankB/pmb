@@ -80,19 +80,24 @@ mkfs.ext4 -L pmb-system -F -F "${part5}"
 ## Use rest of Extended partition for an empty logical (?) partition
 echo  "type=L" | sfdisk -N 6 "${device}"
 
-# mount pmb-system and root filesystembefore calling a helper
+# mount pmb-system and root (target) filesystem before calling a helper
 pmb_system_mnt=/tmp/$(date +%S%N)
 mkdir "$pmb_system_mnt"
 mount "${part5}" "$pmb_system_mnt"
 target_mnt=/tmp/$(date +%S%N)
 mkdir "$target_mnt"
 mount "${part2}" "$target_mnt"
+boot_mnt=/tmp/$(date +%S%N)
+mkdir "$boot_mnt"
+mount "$part1" "$boot_mnt"
+
 ## Add line to OS tracking file.
 # Regex for PARTUUID provided by:
 # https://stackoverflow.com/questions/13565658/right-tool-to-filter-the-uuid-from-the-output-of-blkid-program-using-grep-cut
 partuuid=$(blkid|grep "${part2}"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
 echo "\"$label\" $partuuid \"$part2\"" \
     >"${pmb_system_mnt}/installed-OS"
+bootuuid=$(blkid|grep "${part1}"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
 
 ## source helper if provided in config/ENV and found
 if [[ -v helper ]]
@@ -109,5 +114,5 @@ fi
 # run helper to spoof MAC address
 spoof_mac
 
-umount "$pmb_system_mnt" "$target_mnt"
-rm -r "$pmb_system_mnt" "$target_mnt"
+umount "$pmb_system_mnt" "$target_mnt" "$boot_mnt"
+rm -r "$pmb_system_mnt" "$target_mnt" "$boot_mnt"
