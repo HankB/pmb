@@ -27,23 +27,21 @@ if [ -e /tmp/sysconf.txt ]
 then
     case $(basename "$0") in 
         "pmb-add")
-            echo "add to TAR"
             echo "add to /boot/firmware"
             mv /tmp/sysconf.txt "$boot_mnt"
+
             # tweak the root specification in `cmdline.txt` and 
             # "$target_mnt"/etc/default/raspi-firmware
             sed -i "s/LABEL=RASPIROOT/PARTUUID=${partuuid}/" "$boot_mnt"/cmdline.txt
             # comment `ROOTPART=LABEL=RASPIROOT` in "$target_mnt"/etc/default/raspi-firmware
             sed -i "s/^ROOTPART=LABEL=RASPIROOT/ROOTPART=PARTUUID=${partuuid}/" "$target_mnt"/etc/default/raspi-firmware
-            echo can we tweak files in the loop mount?
+            
+            # Fix filesystem ID in `/etc/fstab`
+            sed -i  -e s/LABEL=RASPIROOT/PARTUUID="${partuuid}"/ \
+                    -e s/LABEL=RASPIFIRM/PARTUUID="${bootuuid}"/ "$target_mnt"/etc/fstab
             ;;
         "pmb-init")
-            # Mount boot and root partitions
-            boot_mnt=/tmp/$(date +%S%N)
-            mkdir "$boot_mnt"
-            mount "$part1" "$boot_mnt"
-
-            echo "add to /boot/firmware"
+            # Add `sysconf.txt` to boot filesystem
             mv /tmp/sysconf.txt "$boot_mnt"
 
             # tweak the root specification in `cmdline.txt` and 
@@ -52,9 +50,9 @@ then
             # comment `ROOTPART=LABEL=RASPIROOT` in "$target_mnt"/etc/default/raspi-firmware
             sed -i "s/^ROOTPART=LABEL=RASPIROOT/ROOTPART=PARTUUID=${partuuid}/" "$target_mnt"/etc/default/raspi-firmware
 
-            umount "$boot_mnt" 
-            rm -r "$boot_mnt"
-
+            # Fix filesystem ID in `/etc/fstab`
+            sed -i  -e s/LABEL=RASPIROOT/PARTUUID="${partuuid}"/ \
+                    -e s/LABEL=RASPIFIRM/PARTUUID="${bootuuid}"/ "$target_mnt"/etc/fstab
             ;;
         *)
             echo "who is $0 which called 'helper-debian'"
