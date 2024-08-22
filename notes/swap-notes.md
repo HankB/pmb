@@ -88,3 +88,79 @@ root@pmb-rpios:/home/hbarta#
 ```
 
 PARTUUID has changed! This needs a fixup when swapping. That was probably always needed anyway. Repeating the swap steps and fixing `cmdline.txt` and `raspi-firmware`. And boot. Hung because Ethernet not connected. Connected and sort of came up, but networking not fully configured and boot partition not mounted. Rebooting but seems not good. Ah... Did I fix the boot partition mount in `/etc/fstab`. No, I did not. Got a clean boot once the format for `/etc/fstab` was correct. Yay!
+
+## 2024-08-22 test latest changes
+
+Backup boot partition.
+
+```text
+mkdir -p /root/boot-backup
+tar cf /root/boot-backup/swap-backup.tar /boot/firmware/
+tar tf /root/boot-backup/swap-backup.tar
+```
+
+Replace boot partition with other OS'
+
+```text
+mkdir /mnt/root
+mount /dev/sda6 /mnt/root
+rm -r /boot/firmware/*
+tar --strip-components=2 --directory=/boot/firmware -xf /mnt/root/root/boot-backup/install-backup.tar
+ls -l /boot/firmware
+```
+
+Looks right. Now check `cmdline.txt` and `/etc/fstab` in the next OS.
+
+```text
+cat /boot/firmware/cmdline.txt
+cat /mnt/root/etc/fstab
+```
+
+```text
+root@pmb-rpios:~# cat /boot/firmware/cmdline.txt
+console=tty0 console=ttyS1,115200 root=PARTUUID="a3f161f3-06" rw fsck.repair=yes net.ifnames=0 rootwait 
+root@pmb-rpios:~# cat /mnt/root/etc/fstab
+# The root file system has fs_passno=1 as per fstab(5) for automatic fsck.
+PARTUUID="a3f161f3-06" / ext4 rw 0 1
+# All other file systems have fs_passno=2 as per fstab(5) for automatic fsck.
+PARTUUID="a3f161f3-01" /boot/firmware vfat rw 0 2
+root@pmb-rpios:~# blkid|grep a3f161f3
+root@pmb-rpios:~# blkid
+/dev/sda2: LABEL="RpiOS" UUID="56f80fa2-e005-4cca-86e6-19da1069914d" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="eae80a8e-02"
+/dev/sda5: LABEL="pmb-system" UUID="72aec940-6a3f-4457-a03e-194bc7edcb92" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="eae80a8e-05"
+/dev/sda1: LABEL_FATBOOT="bootfs" LABEL="bootfs" UUID="91FE-7499" BLOCK_SIZE="512" TYPE="vfat" PARTUUID="eae80a8e-01"
+/dev/sda6: LABEL="Debian12" UUID="b35742f8-0abe-48aa-a9a4-fb78b5b93cbd" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="eae80a8e-06"
+/dev/sda7: PARTUUID="eae80a8e-07"
+root@pmb-rpios:~# 
+```
+
+Fixup PARTUUID
+
+```text
+root@pmb-rpios:~# sed -i s/a3f161f3/eae80a8e/ /boot/firmware/cmdline.txt
+root@pmb-rpios:~# sed -i s/a3f161f3/eae80a8e/ /mnt/root/etc/fstab
+root@pmb-rpios:~# grep eae80a8e /mnt/root/etc/fstab /boot/firmware/cmdline.txt
+/mnt/root/etc/fstab:PARTUUID="eae80a8e-06" / ext4 rw 0 1
+/mnt/root/etc/fstab:PARTUUID="eae80a8e-01" /boot/firmware vfat rw 0 2
+/boot/firmware/cmdline.txt:console=tty0 console=ttyS1,115200 root=PARTUUID="eae80a8e-06" rw fsck.repair=yes net.ifnames=0 rootwait 
+root@pmb-rpios:~# 
+```
+
+And reboot - Great Success! Just remember to reconnect the Ethernet cable. Reboot - no joy. Did the blkid change again? No, forgot to change `/media/hbarta/Debian12/etc/default/raspi-firmware`. Need to add:
+
+```text
+sed -i s/a3f161f3/eae80a8e/ /mnt/root/etc/default/raspi-firmware
+```
+
+Reboot again - Great Success again! Now swap back to RpiOS.
+
+```text
+systemctl daemon-reload
+mkdir -p /mnt/root
+mount /dev/sda2 /mnt/root
+rm -r /boot/firmware/*
+tar --strip-components=2 --directory=/boot/firmware -xf /mnt/root/root/boot-backup/swap-backup.tar
+ls -l /boot/firmware
+```
+
+`cmdline.txt` and `fstab` look good. Reboot! Good - but no Ethernet, just WiFi. Hmmm.
