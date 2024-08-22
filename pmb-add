@@ -111,7 +111,7 @@ mkdir "$target_mnt"
 
 # Configure and mount loop devices for the image to be installed
 
-img_loop_dev=$(losetup --find --partscan --read-only --show "$image_file")
+img_loop_dev=$(losetup --find --partscan --show "$image_file")
 mount "${img_loop_dev}p1" "$boot_mnt"
 mount "${img_loop_dev}p2" "$root_mnt"
 
@@ -123,15 +123,40 @@ mount "${partbase}${newpart}" "$target_mnt"
 
 rsync -a "$root_mnt"/ "$target_mnt"
 
-# archive boot files
+# mount pmb-system 
+pmb_system_mnt=/tmp/$(date +%S%N)
+mkdir "$pmb_system_mnt"
+mount "${part5}" "$pmb_system_mnt"
+## Add line to OS tracking file.
+# Regex for PARTUUID provided by:
+# https://stackoverflow.com/questions/13565658/right-tool-to-filter-the-uuid-from-the-output-of-blkid-program-using-grep-cut
+partuuid=$(blkid|grep "${partbase}${newpart}"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
+echo "\"$label\" $partuuid \"${partbase}${newpart}\"" \
+    >>"${pmb_system_mnt}/installed-OS"
 
-mkdir "$target_mnt"/root/root-backup/
-tar cf "$target_mnt"/root/root-backup/install-backup.tar "$root_mnt"
+
+## source helper if provided in config/ENV and found
+if [[ -v helper ]]
+then
+    if [ -e "$helper" ]
+    then
+        # shellcheck disable=SC1090 # ShellCheck can't follow non-const...
+        source "$helper"
+    else
+        echo "helper script \"$helper\" not found"
+    fi
+fi
+
+# run helper to spoof MAC address
+spoof_mac
+
+# archive boot files
+mkdir "$target_mnt"/root/boot-backup/
+tar cf "$target_mnt"/root/boot-backup/install-backup.tar "$boot_mnt"
 
 ### cleanup
-
-umount "$boot_mnt" "$root_mnt" "$target_mnt"
+umount "$boot_mnt" "$root_mnt" "$target_mnt" "$pmb_system_mnt"
 losetup -d "$img_loop_dev"
-rm -r "$boot_mnt" "$root_mnt" "$target_mnt" "${image_file}"
+rm -r "$boot_mnt" "$root_mnt" "$target_mnt" "${image_file}" "$pmb_system_mnt"
 
 echo "$image successfully installed to ${partbase}${newpart}"
