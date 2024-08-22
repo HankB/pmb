@@ -133,6 +133,7 @@ mount "${part5}" "$pmb_system_mnt"
 partuuid=$(blkid|grep "${partbase}${newpart}"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
 echo "\"$label\" $partuuid \"${partbase}${newpart}\"" \
     >>"${pmb_system_mnt}/installed-OS"
+bootuuid=$(blkid|grep "${partbase}1"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
 
 
 ## source helper if provided in config/ENV and found
