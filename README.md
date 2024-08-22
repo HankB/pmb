@@ -90,8 +90,20 @@ For some OSs, it may be useful to configure some things during `pmb-init` or `pm
 Using partition labels alone seems like a troublesome way to identify OS partitions since a user (me!) will likely create additional partitions and label them. Instead an extra logical partition will be created in the extended partition of nominal size (4GB?) and which will contain a list of the partitions. These will include `label`, `PARTUUID` and partition in a format amenable to usage by a bash script such as
 
 ```text
-label=RpiOS partuuid=1aa9757c-02 partition=/dev/mmcblk0p2
+"RpiOS" "1aa9757c-02" "dev/mmcblk0p2"
 ```
+
+It's awkward for distro specific helpers to have to mount partitions to tweak things (and even harder to keep things straight.) For that reason, helpers can expect the following mounts in the indicated environment variables.
+
+* `boot_mnt` - Mount point for the source boot (FAT) partition. This may be a loop mount and in that case will be mounted read/write.
+* `root_mount` - Mount point for the root filesystem source, also possibly a loop mount. In the case of `pmb-init` this is not provided as there is no "source" and the "target" is modified in place (and not copied form the source.)
+* `target_mnt` - Mount point where the OS is installed and will run from.
+* `pmb_system_mnt` - Mount point for auziliary partition which holds the table of installed OSs in `${pmb_system_mnt}/installed-OS`. If a particular OS needs additional information it can be stored here (in an OS specific file.)
+
+In addition, the following variables will provide the UUID for boot and root partitions.
+
+* `partuuid`
+* `bootuuid`
 
 ## Details
 
@@ -99,9 +111,9 @@ label=RpiOS partuuid=1aa9757c-02 partition=/dev/mmcblk0p2
 
 On first boot, all OS images of which I am aware expand the EXT4 partition to use the remainder of the storage medium. This can be constrained by creating an additional disk partition that limits the space available for expansion to the empty space between the EXT4 partition and the additional partition.
 
-The Pi uses MPR partitions so in order to provide partitions for more than two additional OS images some will need to be extended partitions.
+The Pi uses MBR partitions so in order to provide partitions for more than two additional OS images some will need to be extended partitions.
 
- it will be necessary to verify that the Pi can use an EXT4 partition in an exgtended partition. (The boot partition will remain in a primary partitiion as it is shared among all OSs.)
+It will be necessary to verify that the Pi can use an EXT4 partition in an extended partition. (The boot partition will remain in a primary partition as it is reused among all OSs.)
 
 The first task is to create a pre-first boot playbook that will:
 
