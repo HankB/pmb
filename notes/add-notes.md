@@ -465,7 +465,12 @@ At present the script ends with uncompressing the image to install to `/tmp`. Ad
 1. Uncompress the image (to be installed) and loop mount both partitions. (done)
 1. Copy contents of root partition to the new partition (rsync.) (done)
 1. Copy the contents of the boot partition to a directory in the new partition (tar.) (done)
-1. source generic helpers and spoof MAC addresses
-1. Call any specified helper
-1. Unmount all partitions and remove mount points.
-1. Remove uncompressed image.
+1. source generic helpers and spoof MAC addresses (done)
+1. Call any specified helper (done)
+1. Add new OS to tracking table. (done)
+1. Unmount all partitions and remove mount points. (done)
+1. Remove uncompressed image. (done)
+
+## 2024-08-21 testing
+
+The tar which should only include the firmware stuff seems to include everything. Fixed.
