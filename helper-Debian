@@ -28,6 +28,14 @@ then
     case $(basename "$0") in 
         "pmb-add")
             echo "add to TAR"
+            echo "add to /boot/firmware"
+            mv /tmp/sysconf.txt "$boot_mnt"
+            # tweak the root specification in `cmdline.txt` and 
+            # "$target_mnt"/etc/default/raspi-firmware
+            sed -i "s/LABEL=RASPIROOT/PARTUUID=${partuuid}/" "$boot_mnt"/cmdline.txt
+            # comment `ROOTPART=LABEL=RASPIROOT` in "$target_mnt"/etc/default/raspi-firmware
+            sed -i "s/^ROOTPART=LABEL=RASPIROOT/ROOTPART=PARTUUID=${partuuid}/" "$target_mnt"/etc/default/raspi-firmware
+            echo can we tweak files in the loop mount?
             ;;
         "pmb-init")
             # Mount boot and root partitions
