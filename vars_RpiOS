@@ -1,4 +1,4 @@
-device=/dev/sda
+device=/dev/sdc
 size=10G
 image=/home/hbarta/Downloads/Pi/Raspbian/2024-07-04-raspios-bookworm-arm64-lite.img.xz
 label=RpiOS
@@ -6,3 +6,4 @@ Ethernet_MAC="b8:27:eb:01:e3:92"
 Ethernet_match="Driver=macb bcmgenet r8152 ethernet"
 Wifi_MAC="b8:27:eb:01:e3:93"
 Wifi_match="Driver=rtl8xxxu brcmfmac wifi"
+helper=helper-RpiOS
