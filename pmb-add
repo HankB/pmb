@@ -131,8 +131,10 @@ mount "${part5}" "$pmb_system_mnt"
 # Regex for PARTUUID provided by:
 # https://stackoverflow.com/questions/13565658/right-tool-to-filter-the-uuid-from-the-output-of-blkid-program-using-grep-cut
 partuuid=$(blkid|grep "${partbase}${newpart}"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
-echo "\"$label\" $partuuid \"${partbase}${newpart}\"" \
-    >>"${pmb_system_mnt}/installed-OS"
+echo "PARTUUID=$partuuid" > "$pmb_system_mnt/OS_list/$label"
+echo "root_dev=${partbase}${newpart}"    >> "$pmb_system_mnt/OS_list/$label"
+# helper added if specified and found
+
 bootuuid=$(blkid|grep "${partbase}1"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
 
 
@@ -143,6 +145,7 @@ then
     then
         # shellcheck disable=SC1090 # ShellCheck can't follow non-const...
         source "$helper"
+        echo "helper=$helper" >> "$pmb_system_mnt/OS_list/$label"
     else
         echo "helper script \"$helper\" not found"
     fi
