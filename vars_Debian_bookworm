@@ -1,4 +1,4 @@
-device=/dev/sdc
+device=/dev/sdb
 size=10G
 image=/home/hbarta/Downloads/Pi/Debian/20231109_raspi_4_bookworm.img.xz
 label=Debian12
