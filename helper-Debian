@@ -54,6 +54,9 @@ then
             sed -i  -e s/LABEL=RASPIROOT/PARTUUID="${partuuid}"/ \
                     -e s/LABEL=RASPIFIRM/PARTUUID="${bootuuid}"/ "$target_mnt"/etc/fstab
             ;;
+        "pmb-swap")
+            # make sure cmdline.txt, fstab and sysconf.txt are right.
+            ;;
         *)
             echo "who is $0 which called 'helper-debian'"
             exit 1
