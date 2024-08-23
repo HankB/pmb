@@ -164,3 +164,7 @@ ls -l /boot/firmware
 ```
 
 `cmdline.txt` and `fstab` look good. Reboot! Good - but no Ethernet, just WiFi. Hmmm.
+
+## 2024-08-23 device ID
+
+This is a little sticky. `/dev/sdX` style identifiers will change. `PARTUUID` should have been good but RpiOS changes them on first boot. Other OSs could also do that, particularly the ones based on RpiOS. Hopefully the partition labels will stick. That's been the case with testing with Debian and RpiOS so far. Scripts will use that to identify the root device when swapping. And the stored information will also include the specific OS helper.

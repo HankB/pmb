@@ -81,13 +81,13 @@ Tieing IP address to H/W MAC is fraught. Each OS would get the same IP sddress i
 
 The files that will be copied to boot partition (AKA FAT filesystem partition) will be copied to `/root/boot-backup/` and named `install-backup.tar` or `swap-backup.tar`. Compressing these did not seem to save much so that is not done. The difference is because the source directory will be `/boot/firmware` when preparing to swap and `/tmp/<some_dir>/` during initialization or addition and it is not clear if the same command can be used to extract to `/boot/firmware`. This may be a TODO.
 
-When a swap is performed, the `/boot/firmware/cmdline.txt` will be adjusted to select the root partition by `PARTUUID` as revealed by `blkid`.
+When a swap is performed, the `/boot/firmware/cmdline.txt` will be adjusted to select the root partition by `PARTUUID` as revealed by `blkid`. The `/etc/fstab` will be similarly modified to match the present PARTUUIDs for root an boot partitions. (These change when RpiOS first boots.)
 
 Potential swap targets will be identified by the root partition `LABEL`, again as identified by `blkid`. The partition labels will be provided when the OSs are installed (either by `pmb-init` or `pmb-add`) and the partitions will be labeled accordingly. Some OSs select the root partition by label and this leads to issues when there are multiple installs. The boot process may select the wrong root partition and the partition lapel may be a convenient way to identify OS partitions. An alternative would be to record partition IDs and OS names ion a text file somewhere and use that to identify optiosn available when swapping.
 
 For some OSs, it may be useful to configure some things during `pmb-init` or `pmb-add`. (user name, SSH credentials, hostname etc.) The add/init scripts will be modified to support execution of such helpers.
 
-Using partition labels alone seems like a troublesome way to identify OS partitions since a user (me!) will likely create additional partitions and label them. Instead an extra logical partition will be created in the extended partition of nominal size (4GB?) and which will contain a list of the partitions. These will include `label`, `PARTUUID` and partition in a format amenable to usage by a bash script such as
+Using partition labels alone seems like a troublesome way to identify OS partitions since a user (me!) will likely create additional partitions and label them. Instead an extra logical partition will be created in the extended partition of nominal size (4GB?) and which will contain a list of the partitions. The partitions information will be stored in a file named to match the partition label. Contents of the partition file will be in the form of ENV variables that the script can source and will include (for example)
 
 ```text
 "RpiOS" "1aa9757c-02" "dev/mmcblk0p2"
@@ -132,7 +132,7 @@ This will be allocated to a Logical partition in the Extended partition.
 
 Details:
 
-* This is best performed when booted from media other than the target as formatting programs get cranky about modifying the partitoin table when partitions are mounted and active. (Probably boot from SD and modify SATA/USB or NVME SSD.)
+* This is best performed when booted from media other than the target as formatting programs get cranky about modifying the partition table when partitions are mounted and active. (Probably boot from SD and modify SATA/USB or NVME SSD.)
 * Identify the starting sector of the next partition.
 * Create and format and mount the partition.
 * Uncompress the source image to `/tmp`
@@ -143,7 +143,7 @@ OSs. This eliminates the need to identify which OS was previously active and bac
 
 ### Swapping to another OS.
 
-* Identify candidates by label as shown by `lsblk`. Q: How will this differentiate between OS installations and other partitions the user may create? It seems like it will be necessary to keep a table of OS installations and their partitions, perhaps in the original OS installation filesystem. Or does it make sense to create a small filesystem to include this?
+* Identify candidates by label as shown by `lsblk`. Q: How will this differentiate between OS installations and other partitions the user may create? It seems like it will be necessary to keep a table of OS installations and their partitions, perhaps in the original OS installation filesystem. Or does it make sense to create a small filesystem to include this? (Yes, small filesystem to manage this.)
 * Confirm settings in `/boot/firmware/cmdline.txt` and `/etc/fstab` to make certain they have not been modified by an upgrade since originally performed.
 
 ## Alternatives
