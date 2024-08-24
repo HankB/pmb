@@ -4,5 +4,6 @@
 # meant to be sourced from pmb-init and pmb-add scripts
 
 # Disable passwordless sudo
+# shellcheck disable=SC2154 # target_mnt is referenced but not assigned.
 mv  "$target_mnt"/etc/sudoers.d/010_pi-nopasswd \
     "$target_mnt"/etc/sudoers.d/010_pi-nopasswd~
