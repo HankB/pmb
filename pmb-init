@@ -21,7 +21,7 @@ usage() {
 }
 
 # pull in helpers
-source $(dirname $0)/pmb-helpers
+source "$(dirname "$0")/pmb-helpers"
 
 # Check for first arg - settings file
 if [[ -v 1 ]]
@@ -99,7 +99,7 @@ partuuid=$(blkid|grep "${part2}"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//
 echo "PARTUUID=$partuuid" > "$pmb_system_mnt/OS_list/$label"
 echo "root_dev=$part2"    >> "$pmb_system_mnt/OS_list/$label"
 # helper added if specified and found
-
+# shellcheck disable=SC2034 # (warning): bootuuid appears unused
 bootuuid=$(blkid|grep "${part1}"|grep -oP 'PARTUUID=[0-9a-zA-Z"-]+'|sed 's/.*=//')
 
 ## source helper if provided in config/ENV and found
