@@ -28,15 +28,19 @@ then
     case $(basename "$0") in 
         "pmb-add")
             echo "add to /boot/firmware"
+            # shellcheck disable=SC2154 # boot_mnt is referenced but not assigned.
             mv /tmp/sysconf.txt "$boot_mnt"
 
             # tweak the root specification in `cmdline.txt` and 
             # "$target_mnt"/etc/default/raspi-firmware
+            # shellcheck disable=SC2154 # partuuid is referenced but not assigned.
             sed -i "s/LABEL=RASPIROOT/PARTUUID=${partuuid}/" "$boot_mnt"/cmdline.txt
             # comment `ROOTPART=LABEL=RASPIROOT` in "$target_mnt"/etc/default/raspi-firmware
+            # shellcheck disable=SC2154 # target_mnt is referenced but not assigned.
             sed -i "s/^ROOTPART=LABEL=RASPIROOT/ROOTPART=PARTUUID=${partuuid}/" "$target_mnt"/etc/default/raspi-firmware
             
             # Fix filesystem ID in `/etc/fstab`
+            # shellcheck disable=SC2154 # bootuuid is referenced but not assigned.
             sed -i  -e s/LABEL=RASPIROOT/PARTUUID="${partuuid}"/ \
                     -e s/LABEL=RASPIFIRM/PARTUUID="${bootuuid}"/ "$target_mnt"/etc/fstab
             ;;
