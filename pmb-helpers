@@ -3,7 +3,7 @@
 # Generic helper functions intended to be shared among the various
 # 'pmb_<do-something>' scripts.
 
-## Function to write Systemd .link files to '/etc/systemd/network'
+## spoof_mac() will write Systemd .link files to '/etc/systemd/network'
 # requires that the root filesystem be mounted and the mount point
 # in $$target_mnt. It will use (if provided.)
 
@@ -43,4 +43,56 @@ MACAddress=$Wifi_MAC
 EOF
     fi
 
+}
+
+
+## fixup_OS_info() will refresh the entries for the OS indicated by $label
+# in the files stored in "$pmb_system_mnt/OS_list/$label" to handle changes
+# in "/dev/sdX" or "/dev/nvme*" or "/dev/mmc*" device name changes as well
+# as changes in the PARTUUID name.
+#
+# The source of truth for identifying devices is therefore the $label
+#
+# This function expects the file to be found at
+# "$pmb_system_mnt/OS_list/$label"
+#
+# example "lsblk --raw --noheadings --output NAME,PARTUUID,LABEL" output is
+# sda6 a3f161f3-06 Debian12
+
+fixup_OS_info() {
+    # Can the info for this OS label be read?
+    if [ -e "$pmb_system_mnt/OS_list/$label" ]
+    then
+        source "$pmb_system_mnt/OS_list/$label"
+    else
+        echo "$pmb_system_mnt/OS_list/$label cannot be found/read"
+        exit 1
+    fi
+
+    # Does a filesystwm with the label exist?
+    device_info=$(lsblk -r -n -o NAME,PARTUUID,LABEL | grep "$label")
+    echo "lsblk: $device_info"
+    if [ -z "$device_info" ]
+    then
+        echo "partition labeled $label not found"
+        exit 1
+    fi
+
+    # Check for correct device, substitute if wrong
+    blkid_device=$(echo "$device_info" | awk '{print "/dev/"$1}')
+    if [ "$blkid_device" != "$device" ]
+    then
+        echo "device in  $pmb_system_mnt/OS_list/$label does not match blkid result"
+        echo "$blkid_device vs $device"
+        sed -i -e "s#device=.*#device=$blkid_device#" "$pmb_system_mnt/OS_list/$label"
+    fi
+
+    # Check for correct PARTUUID, substitute if wrong
+    blkid_PARTUUID=$(echo "$device_info" | awk '{print $2}')
+    if [ "$blkid_PARTUUID" != "$PARTUUID" ]
+    then
+        echo "PARTUUID in  $pmb_system_mnt/OS_list/$label does not match blkid result"
+        echo "$blkid_PARTUUID vs $PARTUUID"
+        sed -i -e "s#PARTUUID=.*#PARTUUID=$blkid_PARTUUID#" "$pmb_system_mnt/OS_list/$label"
+    fi
 }

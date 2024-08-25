@@ -8,10 +8,46 @@ set -o nounset
 
 source pmb-helpers
 
+############### test spoof_mac ###############
 target_mnt=/tmp
 mkdir -p "${target_mnt}/etc/systemd/network"
 
-Ethernet_MAC="e4:5f:01:e3:49:90"
-Wifi_MAC="e4:5f:01:e3:49:91"
+export Ethernet_MAC="e4:5f:01:e3:49:90"
+export Wifi_MAC="e4:5f:01:e3:49:91"
 
 spoof_mac
+
+############### test fixup_OS_info ###############
+
+pmb_system_mnt=/tmp
+mkdir -p "$pmb_system_mnt/OS_list"
+label=Debian12
+echo "label=$label" > "$pmb_system_mnt/OS_list/$label"
+echo "device=/dev/sda6" >> "$pmb_system_mnt/OS_list/$label"
+echo "PARTUUID=\"eae80a8e-06\"" >> "$pmb_system_mnt/OS_list/$label"
+
+# mock lsblk --raw  --noheadings --output NAME,PARTUUID,LABEL
+# mock lsblk -r -n -o NAME,PARTUUID,LABEL # for brevity
+# Fiddle with the output of mocked 'lsblk' to cinfirm
+# desired results.
+
+lsblk() {
+cat <<EOF
+sda  
+sda1 a3f161f3-01 bootfs
+sda2 a3f161f3-02 RpiOS
+sda3 a3f161f3-03 
+sda5 a3f161f3-05 pmb-system
+sda6 a3f161f3-06 Debian12
+sda7 a3f161f3-07 
+nvme0n1  
+nvme0n1p1 f541a9d1-01 bootfs
+nvme0n1p2 f541a9d1-02 rootfs
+nvme0n1p3 f541a9d1-03 P22163770E7C5
+EOF
+}
+
+fixup_OS_info
+
+cat "$pmb_system_mnt/OS_list/$label"
+rm -r  "$pmb_system_mnt/OS_list/"
