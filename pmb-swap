@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Bash3 Boilerplate. Copyright (c) 2014, kvz.io
+
+set -o errexit
+set -o pipefail
+set -o nounset
+############### end of Boilerplate
+
+## Code to swap between from one OS installation on storage media to another.
+# Requires env var
+# * label - Used to identify the next OS partition and related information 
+#   stored in the pmb-system labeled partition.
+
+usage() {
+    echo "$0 <os_label> <device>"
+    echo "Label of EXT4 filesystem where target OS has been installed."
+    echo "device which contains the "pmb-system" filesystem"
+    exit 1
+}
+
+# Check for first arg - label
+if [[ -v 1 ]]
+then
+    root_label=$(findmnt -n -o SOURCE /)
+    label="$1"
+    if[ "$root_label" == "$label" ]
+    then
+        echo "$root_label is already in use"
+        usage
+    fi
+
+    # find info partition
+    if [ -e "${device}5" ]
+    then
+        part5=${device}5
+        partbase=${device}
+    elif [ -e "${device}p5" ]
+    then
+        part5="${device}p5"
+        partbase=${device}p
+    else
+        echo "Can't find partition 5 on $device"
+        usage
+    fi
+
+    # Mount info partition
+
+
+    pmb_system_mnt=/tmp/$(date +%S%N)
+    mkdir "$pmb_system_mnt"
+    mount "${part5}" "$pmb_system_mnt"
+
+    # fixup (or bail if $label does not represent an available OS)
+    fixup_OS_info
+else
+    usage
+fi
+
