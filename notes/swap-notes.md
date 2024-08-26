@@ -168,3 +168,17 @@ ls -l /boot/firmware
 ## 2024-08-23 device ID
 
 This is a little sticky. `/dev/sdX` style identifiers will change. `PARTUUID` should have been good but RpiOS changes them on first boot. Other OSs could also do that, particularly the ones based on RpiOS. Hopefully the partition labels will stick. That's been the case with testing with Debian and RpiOS so far. Scripts will use that to identify the root device when swapping. And the stored information will also include the specific OS helper.
+
+## 2024-08-25 swap requirements
+
+1. Confirm the desired target is not the current running OS
+1. Mount the information partition (label `pmb-system`) and import variables for the desired target, confirming that they exist.
+1. Fixup the information file (`fixup_OS_info()`).
+1. Mount the target partition and confirm that the boot partition backup exists.
+1. Back up the boot partition for the current OS.
+1. Delete files from boot partition.
+1. Restore files from next OS boot backup.
+1. Check `/etc/fstab`, `/boot/firmware/cmdline.txt` and (for Debian) that `/etc/default/raspi-firmware` are all correct (e.g. point to the correct root partition.)
+1. Reboot - It seems sensible to reboot automatically at this point rather than leave preparatiosn in plade and leave old OS running. Likewise if there is any problem encountered during preparation, the system should be left as it was with the OS that was already running.
+
+Possible issues - conflict with automated-upgrades (or manual upgrades)/. Possible locking solution <https://old.reddit.com/r/debian/comments/226suc/how_to_properly_get_and_release_the_dpkg_lock/> and <https://lists.debian.org/debian-dpkg/2010/02/msg00054.html>. See also <https://www.baeldung.com/linux/file-locking> for a possible C solution. Or directly in bash <https://stackoverflow.com/questions/66380930/how-to-acquire-a-lock-file-in-linux-bash> and <https://man7.org/linux/man-pages/man1/flock.1.html>
