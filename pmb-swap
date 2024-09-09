@@ -43,16 +43,46 @@ then
         usage
     fi
 
-    # Mount info partition
-
-
-    pmb_system_mnt=/tmp/$(date +%S%N)
-    mkdir "$pmb_system_mnt"
-    mount "${part5}" "$pmb_system_mnt"
-
-    # fixup (or bail if $label does not represent an available OS)
-    fixup_OS_info
 else
     usage
 fi
 
+# Mount info partition
+pmb_system_mnt=/tmp/$(date +%S%N)
+mkdir "$pmb_system_mnt"
+mount "${part5}" "$pmb_system_mnt"
+
+# fixup (or bail if $label does not represent an available OS)
+fixup_OS_info
+
+## Mount the "next" OS partition
+target_mnt=/tmp/$(date +%S%N)
+mkdir "$target_mnt"
+mount PARTUUID="$PARTUUID" "$target_mnt"
+
+## Check for boot image
+if [ ! -e "$target_mnt"/root/boot_part/backup.tar ]
+then
+    echo "boot backup .../root/boot_part/backup.tar for $label not found"
+    umount "$target_mnt"
+    rm -r "$target_mnt"
+    exit 1
+fi
+
+## Backup current boot partition
+if [ tar cf /root/boot_part/backup.tar /boot/firmware ]
+then
+    echo "cannot backup /boot/firmware to /root/boot_part/backup.tar"
+    umount "$target_mnt"
+    rm -r "$target_mnt"
+    exit 1
+fi
+
+## No turning back after this (except to restore the previous boot part)
+
+## Clear the boot part and install target boot partition components
+rm -rd /boot/firmware/*
+tar --strip-components=2 --directory=/boot/firmware \
+    -xf "$target_mnt"/root/boot_part/backup.tar
+
+## Execute the helper to complete prep for the next OS.
