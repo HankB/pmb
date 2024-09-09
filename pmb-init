@@ -73,14 +73,17 @@ resize2fs "$part2"
 s=$(($(sfdisk --list "${device}" |grep "${part2}"|awk '{print $3}')+1))
 echo  "start=$s type=Ex" | sfdisk -N 3 "${device}"
 
-# TODO add command to add a small EXT4 logical partition 
+## Add a small EXT4 logical partition to store information about installed OSs
+# This will always be the first logical partition in the extended partition 
+# and is hard coded to partition #5 and labeled "pmb-system"
 echo -e "type=L, size=4GiB" | sfdisk -N 5 "${device}"
+# "-F -F" required by mkfs.ext4 if there was a previous partition
 mkfs.ext4 -L pmb-system -F -F "${part5}"
 
-## Use rest of Extended partition for an empty logical (?) partition
+## Use rest of Extended partition for an empty logical partition
 echo  "type=L" | sfdisk -N 6 "${device}"
 
-# mount pmb-system and root (target) filesystem before calling a helper
+# mount pmb-system, boot and root (target) filesystem before calling a helper
 pmb_system_mnt=/tmp/$(date +%S%N)
 mkdir "$pmb_system_mnt"
 mount "${part5}" "$pmb_system_mnt"
