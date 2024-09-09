@@ -155,7 +155,7 @@ fi
 spoof_mac
 
 # archive boot files
-mkdir "$target_mnt"/root/boot-backup/
+mkdir "$target_mnt"/root/boot_part/
 tar cf "$target_mnt"/root/boot_part/backup.tar "$boot_mnt"
 
 ### cleanup
