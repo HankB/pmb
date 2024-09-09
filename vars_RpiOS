@@ -1,6 +1,10 @@
-device=/dev/sdb
+## Be sure to confirm the device!!!
+device=/dev/sda
+
 size=10G
-image=/home/hbarta/Downloads/Pi/Raspbian/2024-07-04-raspios-bookworm-arm64-lite.img.xz
+
+## comment the following like if the card has been imaged with `rpi-imager`
+#image=/home/hbarta/Downloads/Pi/Raspbian/2024-07-04-raspios-bookworm-arm64-lite.img.xz
 label=RpiOS
 Ethernet_MAC="b8:27:eb:01:e3:92"
 Ethernet_match="Driver=macb bcmgenet r8152 ethernet"
