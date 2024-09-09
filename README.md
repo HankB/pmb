@@ -8,9 +8,9 @@ Boot multiple operating systems from a single media device (SD, SSD, etc.) The g
 
 ## Status
 
-* Manual swap between two installations (RpiOS and Debian Bookworm) has been demonstrated. [See notes](./notes/notes.md). Added a third partition and Debian Trixie boots w/out problems from a logical partition.
+* Manual swap between two installations (RpiOS and Debian Bookworm) has been demonstrated. [See notes](./notes/notes.md). Added a third partition and Debian Trixie boots w/out problems from a logical partition. Coding pmb-swap is WIP.
 * There is a first cut of the script to provision an image for RpiOS `pmb-init`. It uses environment variables `size` (size of root partition) and `device` (target device for configuration.)
-* First cut of `pmb-add` is working and has had minimal testing.
+* First cut of `pmb-add` is working and has had sone testing.
 
 ## TODO
 
