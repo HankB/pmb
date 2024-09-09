@@ -58,6 +58,13 @@ EOF
 #
 # example "lsblk --raw --noheadings --output NAME,PARTUUID,LABEL" output is
 # sda6 a3f161f3-06 Debian12
+#
+# Inputs
+#  $pmb_system_mnt - The mount point for the info partition
+#  $label - filesystem label for the target filesystem
+#
+# Outputs
+#  $PARTUUID - UUID for the partition holding the target OS
 
 fixup_OS_info() {
     # Can the info for this OS label be read?
@@ -94,5 +101,6 @@ fixup_OS_info() {
         echo "PARTUUID in  $pmb_system_mnt/OS_list/$label does not match blkid result"
         echo "$blkid_PARTUUID vs $PARTUUID"
         sed -i -e "s#PARTUUID=.*#PARTUUID=$blkid_PARTUUID#" "$pmb_system_mnt/OS_list/$label"
+        PARTUUID="$blkid_PARTUUID"
     fi
 }
