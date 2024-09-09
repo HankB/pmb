@@ -156,7 +156,7 @@ spoof_mac
 
 # archive boot files
 mkdir "$target_mnt"/root/boot-backup/
-tar cf "$target_mnt"/root/boot-backup/install-backup.tar "$boot_mnt"
+tar cf "$target_mnt"/root/boot_part/backup.tar "$boot_mnt"
 
 ### cleanup
 umount "$boot_mnt" "$root_mnt" "$target_mnt" "$pmb_system_mnt"
