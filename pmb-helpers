@@ -65,6 +65,7 @@ EOF
 #
 # Outputs
 #  $PARTUUID - UUID for the partition holding the target OS
+#  $label
 
 fixup_OS_info() {
     # Can the info for this OS label be read?
@@ -87,11 +88,11 @@ fixup_OS_info() {
 
     # Check for correct device, substitute if wrong
     blkid_device=$(echo "$device_info" | awk '{print "/dev/"$1}')
-    if [ "$blkid_device" != "$device" ]
+    if [ "$blkid_device" != "$root_dev" ]
     then
         echo "device in  $pmb_system_mnt/OS_list/$label does not match blkid result"
-        echo "$blkid_device vs $device"
-        sed -i -e "s#device=.*#device=$blkid_device#" "$pmb_system_mnt/OS_list/$label"
+        echo "$blkid_device vs $root_dev"
+        sed -i -e "s#root_dev=.*#root_dev=$blkid_device#" "$pmb_system_mnt/OS_list/$label"
     fi
 
     # Check for correct PARTUUID, substitute if wrong
