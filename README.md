@@ -2,6 +2,8 @@
 
 Raspberry Pi Multi Boot
 
+**Warning Will Robinson! This remains a work in progress and operation of any of these scripts can result in an unbootable host. ** For example, I just wiped the boot partition on my Pi 5 NVME while testing `pmb-swap` and intending to target a USB connected SSD. Fortunately that was fairly easy to restore. But if you are testing this it is preferrable to test on a throw away host or have *good* backups.
+
 This is a work in progress and a consequence is that this README rambles. A lot.
 
 Boot multiple operating systems from a single media device (SD, SSD, etc.) The goal is to provide scripts (or Ansible playbooks) to facilitate installing more than one OS on a bootable storage device and allowing the OS to boot from any of them.
