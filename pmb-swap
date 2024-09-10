@@ -14,35 +14,43 @@ set -o nounset
 usage() {
     echo "$0 <os_label> <device>"
     echo "Label of EXT4 filesystem where target OS has been installed."
-    echo "device which contains the "pmb-system" filesystem"
+    echo "device which contains the 'pmb-system' filesystem"
     exit 1
 }
+
+# pull in helpers
+source "$(dirname "$0")/pmb-helpers"
 
 # Check for first arg - label
 if [[ -v 1 ]]
 then
     root_label=$(findmnt -n -o SOURCE /)
     label="$1"
-    if[ "$root_label" == "$label" ]
+    if [ "$root_label" == "$label" ]
     then
         echo "$root_label is already in use"
         usage
     fi
 
     # find info partition
-    if [ -e "${device}5" ]
+    if [[ -v 2 ]]
     then
-        part5=${device}5
-        partbase=${device}
-    elif [ -e "${device}p5" ]
-    then
-        part5="${device}p5"
-        partbase=${device}p
+        device="$2"
+        if [ -e "${device}5" ]
+        then
+            part5=${device}5
+            # partbase=${device}
+        elif [ -e "${device}p5" ]
+        then
+            part5="${device}p5"
+            # partbase=${device}p
+        else
+            echo "Can't find partition 5 on $device"
+            usage
+        fi
     else
-        echo "Can't find partition 5 on $device"
         usage
     fi
-
 else
     usage
 fi
@@ -70,7 +78,8 @@ then
 fi
 
 ## Backup current boot partition
-if [ tar cf /root/boot_part/backup.tar /boot/firmware ]
+mkdir -p /root/boot_part/
+if ! tar cf /root/boot_part/backup.tar /boot/firmware
 then
     echo "cannot backup /boot/firmware to /root/boot_part/backup.tar"
     umount "$target_mnt"
@@ -81,8 +90,21 @@ fi
 ## No turning back after this (except to restore the previous boot part)
 
 ## Clear the boot part and install target boot partition components
-rm -rd /boot/firmware/*
+rm -rf /boot/firmware/*
 tar --strip-components=2 --directory=/boot/firmware \
     -xf "$target_mnt"/root/boot_part/backup.tar
 
-## Execute the helper to complete prep for the next OS.
+## Execute the helper when provided to complete prep for the next OS.
+if [[ -v helper ]]
+then
+    if [ -e "$helper" ]
+    then
+        # shellcheck disable=SC1090 # ShellCheck can't follow non-const...
+        source "$helper"
+        echo "helper=$helper" >> "$pmb_system_mnt/OS_list/$label"
+    else
+        echo "helper script \"$helper\" not found"
+    fi
+fi
+
+## TODO umount info and target partitions
