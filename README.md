@@ -107,6 +107,11 @@ In addition, the following variables will provide the UUID for boot and root par
 * `partuuid`
 * `bootuuid`
 
+There is an explicit assumption that all OS partitions and the single boot partition reside on the same storage device for two reasons:
+
+* make it easier to ID 'from' and 'to' partitions when swapping. choosing ther wrong partition will have bad results.
+* It makes little sense to have boot and root partitions on different devices (at this point in time. Feel free to convince me otherwise.)
+
 ## Details
 
 ### Initial provisioning
