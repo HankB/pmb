@@ -1,7 +1,7 @@
 ## Be sure to confirm the device!!!
 device=/dev/sda
 
-size=10G
+size=32G
 
 ## comment the following like if the card has been imaged with `rpi-imager`
 #image=/home/hbarta/Downloads/Pi/Raspbian/2024-07-04-raspios-bookworm-arm64-lite.img.xz
