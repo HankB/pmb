@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Bash3 Boilerplate. Copyright (c) 2014, kvz.io
+
+set -o errexit
+set -o pipefail
+set -o nounset
+############### end of Boilerplate
+
+## run shellcheck on the scripts that comprise this effort
+
+for i in pmb-init pmb-add pmb-swap t-helpers helper-Debian helper-RpiOS
+do
+    echo $i
+    shellcheck -x $i
+done
+
+for i in vars*
+do
+    echo $i
+    shellcheck --severity=error --shell=bash $i
+done
