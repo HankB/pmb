@@ -182,3 +182,7 @@ This is a little sticky. `/dev/sdX` style identifiers will change. `PARTUUID` sh
 1. Reboot - It seems sensible to reboot automatically at this point rather than leave preparatiosn in plade and leave old OS running. Likewise if there is any problem encountered during preparation, the system should be left as it was with the OS that was already running.
 
 Possible issues - conflict with automated-upgrades (or manual upgrades)/. Possible locking solution <https://old.reddit.com/r/debian/comments/226suc/how_to_properly_get_and_release_the_dpkg_lock/> and <https://lists.debian.org/debian-dpkg/2010/02/msg00054.html>. See also <https://www.baeldung.com/linux/file-locking> for a possible C solution. Or directly in bash <https://stackoverflow.com/questions/66380930/how-to-acquire-a-lock-file-in-linux-bash> and <https://man7.org/linux/man-pages/man1/flock.1.html>
+
+## 2024-09-17 RpiOS mounts other partitions
+
+This is a new wrinkle for `pmb-swap`. With the full desktop installed, RpiOS will mount the info and root partitions for the other installs. Just more stuff for the script to manage. (`pmb-add` as well, I suppose.)
