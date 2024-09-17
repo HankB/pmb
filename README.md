@@ -17,6 +17,7 @@ Boot multiple operating systems from a single media device (SD, SSD, etc.) The g
 ## TODO
 
 * Add spoofing for Ethernet and Wifi MAC addresses.
+* Fix list of mount points to `umount` (`$umount_list`) to work with mount points that may contain spaces.
 
 ### Roadmap
 
