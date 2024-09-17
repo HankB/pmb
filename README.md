@@ -167,3 +167,4 @@ Compared to what I am working on, `pmb` will likely require more expertise to le
 ## Errata
 
 * The `bash` scripts will be `shellcheck` clean and include some boilerplate from a site that no longer exists. (https://kvz.io/bash-best-practices.html or https://github.com/kvz/bash3boilerplate.)
+* All UUIDs are treated as case sensitive but technically they may not be. They represent an integer value and representation as a hex string is a convention.
