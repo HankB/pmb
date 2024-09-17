@@ -116,17 +116,26 @@ mount "${img_loop_dev}p1" "$boot_mnt"
 mount "${img_loop_dev}p2" "$root_mnt"
 
 # Mount the partition to "install" to.
-
 mount "${partbase}${newpart}" "$target_mnt" 
+
+# start tracking mounts to undo when finished.
+umount_list="$boot_mnt $root_mnt $target_mnt"
 
 # copy root files
 
 rsync -a "$root_mnt"/ "$target_mnt"
 
-# mount pmb-system 
-pmb_system_mnt=/tmp/$(date +%S%N)
-mkdir "$pmb_system_mnt"
-mount "${part5}" "$pmb_system_mnt"
+# mount pmb-system unless already mounted (e.g. by RpiOS)
+if lsblk -r -n -o NAME,PARTUUID,LABEL | grep pmb-system >/dev/null
+then
+    pmb_system_mnt=$(lsblk -r -n -o LABEL,MOUNTPOINT| awk /pmb-system/'{print $2}')
+else
+    pmb_system_mnt=/tmp/$(date +%S%N)
+    mkdir "$pmb_system_mnt"
+    mount "${part5}" "$pmb_system_mnt"
+    umount_list="$umount_list $pmb_system_mnt"
+fi
+
 ## Add line to OS tracking file.
 # Regex for PARTUUID provided by:
 # https://stackoverflow.com/questions/13565658/right-tool-to-filter-the-uuid-from-the-output-of-blkid-program-using-grep-cut
@@ -159,7 +168,7 @@ mkdir "$target_mnt"/root/boot_part/
 tar cf "$target_mnt"/root/boot_part/backup.tar "$boot_mnt"
 
 ### cleanup
-umount "$boot_mnt" "$root_mnt" "$target_mnt" "$pmb_system_mnt"
+umount "$umount_list"
 losetup -d "$img_loop_dev"
 rm -r "$boot_mnt" "$root_mnt" "$target_mnt" "${image_file}" "$pmb_system_mnt"
 
