@@ -38,12 +38,12 @@ then
         device="$2"
         if [ -e "${device}5" ]
         then
-            part5=${device}5
-            # partbase=${device}
+            part5="${device}5"
+            part2="${device}2"
         elif [ -e "${device}p5" ]
         then
             part5="${device}p5"
-            # partbase=${device}p
+            part2="${device}p2"
         else
             echo "Can't find partition 5 on $device"
             usage
@@ -68,30 +68,65 @@ target_mnt=/tmp/$(date +%S%N)
 mkdir "$target_mnt"
 mount PARTUUID="$PARTUUID" "$target_mnt"
 
-## Check for boot image
+## Determine the boot partition we're swapping from
+# Might be the one we're running from
+# Might be on another device that we're swapping between
+current_boot=$(df /boot/firmware|awk /firmware/'{print $1}')
+if [[ $current_boot =~ $device ]] # boot partition match the device?
+then
+    echo were on the target device
+    from_boot="/boot/firmware"
+    from_root="/"
+else
+    echo not on target
+    # need to ID and mount a"from_boot" and "from_root"
+    from_boot=/tmp/$(date +%S%N)
+    mkdir "$from_boot"
+    mount "${part2}" "$from_boot"
+    from_partuuid=$(grep -oP 'PARTUUID=[0-9a-zA-Z"-]+' "$from_boot"/cmdline.txt|sed 's/.*=//')
+    from_root=/tmp/$(date +%S%N)
+    mkdir "$from_root"
+    mount PARTUUID="$from_partuuid" "$from_root"
+fi
+
+## Check for boot image in the target
 if [ ! -e "$target_mnt"/root/boot_part/backup.tar ]
 then
     echo "boot backup .../root/boot_part/backup.tar for $label not found"
     umount "$target_mnt"
     rm -r "$target_mnt"
+    if [ "$from_boot" != "/boot/firmware" ] # Need to umount of not running on 'from' OS
+    then
+        umount "$from_boot"
+        rm -r "$from_boot"
+        umount "$from_root"
+        rm -r "$from_root"
+    fi
     exit 1
 fi
 
 ## Backup current boot partition
-mkdir -p /root/boot_part/
-if ! tar cf /root/boot_part/backup.tar /boot/firmware
+mkdir -p "$from_root"/root/boot_part/
+if ! tar cf "$from_root"/root/boot_part/backup.tar "$from_boot"
 then
     echo "cannot backup /boot/firmware to /root/boot_part/backup.tar"
     umount "$target_mnt"
     rm -r "$target_mnt"
+    if [ "$from_boot" != "/boot/firmware" ] # Need to umount of not running on 'from' OS
+    then
+        umount "$from_boot"
+        rm -r "$from_boot"
+        umount "$from_root"
+        rm -r "$from_root"
+    fi
     exit 1
 fi
 
 ## No turning back after this (except to restore the previous boot part)
 
 ## Clear the boot part and install target boot partition components
-rm -rf /boot/firmware/*
-tar --strip-components=2 --directory=/boot/firmware \
+rm -rf "$from_boot"/boot/firmware/*
+tar --strip-components=2 --directory="$from_boot"/boot/firmware \
     -xf "$target_mnt"/root/boot_part/backup.tar
 
 ## Execute the helper when provided to complete prep for the next OS.
@@ -101,7 +136,6 @@ then
     then
         # shellcheck disable=SC1090 # ShellCheck can't follow non-const...
         source "$helper"
-        echo "helper=$helper" >> "$pmb_system_mnt/OS_list/$label"
     else
         echo "helper script \"$helper\" not found"
     fi
