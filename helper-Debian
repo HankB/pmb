@@ -60,7 +60,8 @@ then
             ;;
         "pmb-swap")
             # make sure cmdline.txt, fstab and sysconf.txt are right.
-            ;;
+             fixup_partuuid
+           ;;
         *)
             echo "who is $0 which called 'helper-debian'"
             exit 1
