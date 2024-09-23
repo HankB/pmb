@@ -482,3 +482,26 @@ Tested `pmb-init` (RpiOS) and `pmb-add` (Debian12) and files for Debian look goo
 ## 2024-08-22 testing, again
 
 latest changes, prepping for `pmb-swap`. RpiOS primary, Debian next.
+
+## 2024-09-23 testing
+
+1. `rpi-imager` to install RpiOS to Kingston SSD `/dev/sda`.
+1. `pmb-init` to configure RpiOS.
+1. `pmb-add` to add Debian. No joy, complains about wrong partition table.
+1. Reboot, This mounts all three partitions on `/dev/sda`.
+1. `pmb-add` to add Debian. No joy, complains about mounted partitions.
+
+```text
+root@mars:/home/hbarta/Programming/pmb# ./pmb-add vars_Debian_bookworm 
+sourcing vars_Debian_bookworm
+============================================= find device (part5)
+============================================= part5: /dev/sda5
+5
+6
+7
+next available partition is 7 and new partition is 6
+============================================= partitions to use: 7 and 6
+sfdisk: /dev/sda: partition 6: failed to delete
+root@mars:/home/hbarta/Programming/pmb# 
+```
+
