@@ -55,18 +55,31 @@ else
     usage
 fi
 
-# Mount info partition
-pmb_system_mnt=/tmp/$(date +%S%N)
-mkdir "$pmb_system_mnt"
-mount "${part5}" "$pmb_system_mnt"
+# mount pmb-system unless already mounted (e.g. by RpiOS)
+if lsblk -r -n -o NAME,PARTUUID,LABEL | grep pmb-system >/dev/null
+then
+    pmb_system_mnt=$(lsblk -r -n -o LABEL,MOUNTPOINT| awk /pmb-system/'{print $2}')
+    umount_list=""
+else
+    pmb_system_mnt=/tmp/$(date +%S%N)
+    mkdir "$pmb_system_mnt"
+    mount "${part5}" "$pmb_system_mnt"
+    umount_list="$pmb_system_mnt"
+fi
 
 # fixup (or bail if $label does not represent an available OS)
 fixup_OS_info
 
-## Mount the "next" OS partition
-target_mnt=/tmp/$(date +%S%N)
-mkdir "$target_mnt"
-mount PARTUUID="$PARTUUID" "$target_mnt"
+## Mount the "next" OS partition unless already mounted
+if lsblk -r -n -o NAME,PARTUUID,LABEL | grep "$PARTUUID" >/dev/null
+then
+    target_mnt=$(lsblk -r -n -o LABEL,PARTUUID,MOUNTPOINT| awk /"$PARTUUID"/'{print $3}')
+else
+    target_mnt=/tmp/$(date +%S%N)
+    mkdir "$target_mnt"
+    mount PARTUUID="$PARTUUID" "$target_mnt"
+    umount_list="$umount_list $target_mnt"
+fi
 
 ## Determine the boot partition we're swapping from
 # Might be the one we're running from
@@ -74,7 +87,7 @@ mount PARTUUID="$PARTUUID" "$target_mnt"
 current_boot=$(df /boot/firmware|awk /firmware/'{print $1}')
 if [[ $current_boot =~ $device ]] # boot partition match the device?
 then
-    echo were on the target device
+    echo we are on the target device
     from_boot="/boot/firmware"
     from_root="/"
 else
@@ -87,21 +100,15 @@ else
     from_root=/tmp/$(date +%S%N)
     mkdir "$from_root"
     mount PARTUUID="$from_partuuid" "$from_root"
+    umount_list="$umount_list $from_boot $from_root"
 fi
 
 ## Check for boot image in the target
 if [ ! -e "$target_mnt"/root/boot_part/backup.tar ]
 then
     echo "boot backup .../root/boot_part/backup.tar for $label not found"
-    umount "$target_mnt"
-    rm -r "$target_mnt"
-    if [ "$from_boot" != "/boot/firmware" ] # Need to umount of not running on 'from' OS
-    then
-        umount "$from_boot"
-        rm -r "$from_boot"
-        umount "$from_root"
-        rm -r "$from_root"
-    fi
+    umount "$umount_list"
+    rm -r "$umount_list"
     exit 1
 fi
 
@@ -110,15 +117,8 @@ mkdir -p "$from_root"/root/boot_part/
 if ! tar cf "$from_root"/root/boot_part/backup.tar "$from_boot"
 then
     echo "cannot backup /boot/firmware to /root/boot_part/backup.tar"
-    umount "$target_mnt"
-    rm -r "$target_mnt"
-    if [ "$from_boot" != "/boot/firmware" ] # Need to umount of not running on 'from' OS
-    then
-        umount "$from_boot"
-        rm -r "$from_boot"
-        umount "$from_root"
-        rm -r "$from_root"
-    fi
+    umount "$umount_list"
+    rm -r "$umount_list"
     exit 1
 fi
 
@@ -141,4 +141,6 @@ then
     fi
 fi
 
-## TODO umount info and target partitions
+## umount info and target partitions
+    umount "$umount_list"
+    rm -r "$umount_list"
