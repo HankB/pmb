@@ -77,7 +77,7 @@ fixup_OS_info() {
         exit 1
     fi
 
-    # Does a filesystwm with the label exist?
+    # Does a filesystem with the label exist?
     device_info=$(lsblk -r -n -o NAME,PARTUUID,LABEL | grep "$label")
     echo "lsblk: $device_info"
     if [ -z "$device_info" ]
@@ -104,4 +104,20 @@ fixup_OS_info() {
         sed -i -e "s#PARTUUID=.*#PARTUUID=$blkid_PARTUUID#" "$pmb_system_mnt/OS_list/$label"
         PARTUUID="$blkid_PARTUUID"
     fi
+}
+
+## Make sure that cmdline.txt in the boot partition is correct for
+# the target root partition. Also make sure that this is correct in
+# the target root /etc/fstab
+#
+# Expectations:
+# boot partition mounted at "$from_boot" 
+#   (so cmdline.txt is at "$target_mnt"/from_boot.txt)
+# 
+# root partition is mounted at "$target_mnt"
+
+# "$PARTUUID" is set to the desired target partition
+fixup_partuuid() {
+    sed -i -e "s#PARTUUID=.*#PARTUUID=$PARTUUID#" "$from_boot"/cmdline.txt
+
 }
