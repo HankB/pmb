@@ -18,6 +18,7 @@ Boot multiple operating systems from a single media device (SD, SSD, etc.) The g
 
 * Add spoofing for Ethernet and Wifi MAC addresses.
 * Fix list of mount points to `umount` (`$umount_list`) to work with mount points that may contain spaces.
+* Paramaterize boot backup path (`.../root/boot_part/backup.tar`)
 
 ### Roadmap
 
